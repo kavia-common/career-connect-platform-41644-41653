@@ -1,8 +1,12 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { render, screen } from "@testing-library/react";
+import App from "./App";
+import AppProviders from "./app/AppProviders";
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test("renders login page by default redirect flow", () => {
+  render(
+    <AppProviders>
+      <App />
+    </AppProviders>
+  );
+  expect(screen.getByText(/welcome back/i)).toBeInTheDocument();
 });
