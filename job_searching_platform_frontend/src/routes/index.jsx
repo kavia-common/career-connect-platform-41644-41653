@@ -2,8 +2,10 @@ import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import AppShell from "../app/AppShell";
+import { useAuth } from "../state/authStore";
 
 import LoginPage from "../pages/LoginPage";
+import RegisterPage from "../pages/RegisterPage";
 import DashboardPage from "../pages/DashboardPage";
 
 // Placeholder pages
@@ -19,6 +21,18 @@ import MentorPage from "../pages/MentorPage";
 
 /**
  * PUBLIC_INTERFACE
+ * PublicOnlyRoute: prevents authenticated users from accessing public auth pages.
+ */
+function PublicOnlyRoute({ children }) {
+  const auth = useAuth();
+  if (auth.status === "authenticated" && auth.accessToken) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
+}
+
+/**
+ * PUBLIC_INTERFACE
  * AppRoutes defines all route mappings.
  */
 export default function AppRoutes() {
@@ -27,7 +41,22 @@ export default function AppRoutes() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
       {/* Public */}
-      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/login"
+        element={
+          <PublicOnlyRoute>
+            <LoginPage />
+          </PublicOnlyRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicOnlyRoute>
+            <RegisterPage />
+          </PublicOnlyRoute>
+        }
+      />
 
       {/* Protected */}
       <Route

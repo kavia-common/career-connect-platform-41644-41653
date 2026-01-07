@@ -1,36 +1,54 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { API_BASE } from "../services/config";
+import { register as registerApi } from "../services/authApi";
 import { useAuth } from "../state/authStore";
 import { isValidEmail, validatePassword } from "../utils/validators";
 
 /**
  * PUBLIC_INTERFACE
- * LoginPage for Talenvia.
+ * RegisterPage for Talenvia.
  */
-export default function LoginPage() {
+export default function RegisterPage() {
   const auth = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const returnTo = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get("returnTo") || "/dashboard";
-  }, [location.search]);
-
-  const registered = useMemo(() => {
+  const successFromQuery = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return params.get("registered") === "1";
   }, [location.search]);
 
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [fieldErrors, setFieldErrors] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // If already authenticated, keep users out of public auth pages.
+  useEffect(() => {
+    if (auth.status === "authenticated" && auth.accessToken) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [auth.status, auth.accessToken, navigate]);
 
   const validate = () => {
-    const errors = { email: "", password: "" };
+    const errors = {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    };
+
+    if (!fullName.trim()) errors.fullName = "Name is required.";
 
     if (!email.trim()) errors.email = "Email is required.";
     else if (!isValidEmail(email)) errors.email = "Enter a valid email address.";
@@ -38,8 +56,17 @@ export default function LoginPage() {
     if (!password) errors.password = "Password is required.";
     else errors.password = validatePassword(password);
 
+    if (!confirmPassword) errors.confirmPassword = "Please confirm your password.";
+    else if (confirmPassword !== password)
+      errors.confirmPassword = "Passwords do not match.";
+
     setFieldErrors(errors);
-    return !errors.email && !errors.password;
+    return (
+      !errors.fullName &&
+      !errors.email &&
+      !errors.password &&
+      !errors.confirmPassword
+    );
   };
 
   const onSubmit = async (e) => {
@@ -48,16 +75,32 @@ export default function LoginPage() {
 
     if (!validate()) return;
 
+    setIsSubmitting(true);
     try {
-      await auth.login({ email: email.trim(), password });
-      navigate(returnTo, { replace: true });
+      const res = await registerApi({
+        email: email.trim(),
+        password,
+        fullName: fullName.trim(),
+      });
+
+      // If backend returns token + user (per docs/api.md), we can optionally auto-login.
+      if (res?.accessToken && res?.user) {
+        auth.setAuth(res.accessToken, res.user);
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+
+      // Otherwise: redirect to login with a success notice.
+      navigate("/login?registered=1", { replace: true });
     } catch (err) {
       // err shape normalized by httpClient: { code, message, details, status }
       const message =
-        err?.code === "UNAUTHORIZED"
-          ? "Invalid email or password."
-          : err?.message || "Login failed. Please try again.";
+        err?.code === "VALIDATION_ERROR"
+          ? err?.message || "Please check your details and try again."
+          : err?.message || "Registration failed. Please try again.";
       setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -66,23 +109,20 @@ export default function LoginPage() {
       <div
         className="card"
         style={{
-          maxWidth: 520,
+          maxWidth: 560,
           margin: "0 auto",
           boxShadow: "var(--shadow-md)",
         }}
       >
         <div className="card-body">
           <div style={{ display: "grid", gap: 6, marginBottom: 18 }}>
-            <h1 className="h1">Welcome back</h1>
+            <h1 className="h1">Create your account</h1>
             <div className="muted">
-              Sign in to continue to your Talenvia dashboard.
-            </div>
-            <div className="muted" style={{ fontSize: 12 }}>
-              API base: <code>{API_BASE || "(REACT_APP_API_BASE not set)"}</code>
+              Register to access your dashboard and start tracking applications.
             </div>
           </div>
 
-          {registered ? (
+          {successFromQuery ? (
             <div
               className="card"
               style={{
@@ -97,7 +137,25 @@ export default function LoginPage() {
             </div>
           ) : null}
 
-          <form onSubmit={onSubmit} noValidate>
+          <form onSubmit={onSubmit} noValidate aria-label="register-form">
+            <div className="form-row">
+              <label className="label" htmlFor="fullName">
+                Name
+              </label>
+              <input
+                id="fullName"
+                className="input"
+                type="text"
+                autoComplete="name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                aria-invalid={fieldErrors.fullName ? "true" : "false"}
+              />
+              {fieldErrors.fullName ? (
+                <div className="form-error">{fieldErrors.fullName}</div>
+              ) : null}
+            </div>
+
             <div className="form-row">
               <label className="label" htmlFor="email">
                 Email
@@ -124,13 +182,31 @@ export default function LoginPage() {
                 id="password"
                 className="input"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 aria-invalid={fieldErrors.password ? "true" : "false"}
               />
               {fieldErrors.password ? (
                 <div className="form-error">{fieldErrors.password}</div>
+              ) : null}
+            </div>
+
+            <div className="form-row">
+              <label className="label" htmlFor="confirmPassword">
+                Confirm password
+              </label>
+              <input
+                id="confirmPassword"
+                className="input"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                aria-invalid={fieldErrors.confirmPassword ? "true" : "false"}
+              />
+              {fieldErrors.confirmPassword ? (
+                <div className="form-error">{fieldErrors.confirmPassword}</div>
               ) : null}
             </div>
 
@@ -152,15 +228,15 @@ export default function LoginPage() {
             <button
               className="btn btn-primary"
               type="submit"
-              disabled={auth.status === "authenticating"}
+              disabled={isSubmitting || auth.status === "authenticating"}
               style={{ width: "100%" }}
             >
-              {auth.status === "authenticating" ? "Signing in…" : "Sign in"}
+              {isSubmitting ? "Creating account…" : "Create account"}
             </button>
           </form>
 
           <div style={{ marginTop: 14, fontSize: 13 }} className="muted">
-            Don’t have an account yet? <Link to="/register">Create one</Link>
+            Already have an account? <Link to="/login">Sign in</Link>
           </div>
         </div>
       </div>
