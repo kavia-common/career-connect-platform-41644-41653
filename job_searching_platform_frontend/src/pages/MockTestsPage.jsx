@@ -370,24 +370,96 @@ function FiltersPanel({
     ? countsByCategory[selectedCategory] ?? 0
     : 0;
 
+  // Keep Difficulty counts meaningful for the currently selected category.
+  const countsByDifficultyInSelectedCategory = useMemo(() => {
+    const counts = {};
+    for (const t of tests) {
+      if (!selectedCategory || t.category !== selectedCategory) continue;
+      const diff = t.difficulty || "Other";
+      counts[diff] = (counts[diff] || 0) + 1;
+    }
+    return counts;
+  }, [tests, selectedCategory]);
+
+  const allInSelectedCategoryForDifficulty = selectedCategory
+    ? totalInSelectedCategory
+    : tests.length;
+
   return (
     <div className="card">
       <div className="card-body" style={{ display: "grid", gap: 12 }}>
         <div
           style={{
             display: "flex",
-            justifyContent: "flex-end",
+            justifyContent: "space-between",
             gap: 10,
             flexWrap: "wrap",
-            alignItems: "center",
+            alignItems: "end",
           }}
         >
-          <div className="muted" style={{ fontSize: 13 }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ display: "grid", gap: 6, minWidth: 220 }}>
+              <label
+                className="muted"
+                htmlFor="mocktests_category"
+                style={{ fontSize: 13 }}
+              >
+                Category
+              </label>
+              <select
+                id="mocktests_category"
+                className="input"
+                value={selectedCategory}
+                onChange={(e) => onSelectCategory(e.target.value)}
+              >
+                {categories.map((cat) => {
+                  const count = countsByCategory[cat] ?? 0;
+                  return (
+                    <option key={cat} value={cat}>
+                      {cat} ({count})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div style={{ display: "grid", gap: 6, minWidth: 220 }}>
+              <label
+                className="muted"
+                htmlFor="mocktests_difficulty"
+                style={{ fontSize: 13 }}
+              >
+                Difficulty
+              </label>
+              <select
+                id="mocktests_difficulty"
+                className="input"
+                value={selectedDifficulty}
+                onChange={(e) => onSelectDifficulty(e.target.value)}
+              >
+                {difficulties.map((diff) => {
+                  const count =
+                    diff === "All"
+                      ? allInSelectedCategoryForDifficulty
+                      : (countsByDifficultyInSelectedCategory[diff] ??
+                        countsByDifficulty[diff] ??
+                        0);
+
+                  return (
+                    <option key={diff} value={diff}>
+                      {diff} ({count})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+
+          <div className="muted" style={{ fontSize: 13, textAlign: "right" }}>
             {selectedCategory ? (
               <>
                 Showing <strong>{filteredCount}</strong> in{" "}
-                <strong>{selectedCategory}</strong>
-                {" "}
+                <strong>{selectedCategory}</strong>{" "}
                 <span style={{ opacity: 0.8 }}>
                   (of {totalInSelectedCategory} in category)
                 </span>
@@ -400,73 +472,9 @@ function FiltersPanel({
           </div>
         </div>
 
-        <div style={{ display: "grid", gap: 10 }}>
-          <div style={{ display: "grid", gap: 8 }}>
-            <div className="muted" style={{ fontSize: 13 }}>
-              Category
-            </div>
-
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {categories.map((cat) => {
-                const isActive = cat === selectedCategory;
-                const count = countsByCategory[cat] ?? 0;
-
-                return (
-                  <button
-                    key={cat}
-                    className={isActive ? "btn" : "btn btn-ghost"}
-                    onClick={() => onSelectCategory(cat)}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-                    title={`Show ${cat} tests`}
-                  >
-                    <span>{cat}</span>
-                    <span
-                      className="badge"
-                      style={{
-                        background: isActive ? "rgba(255,255,255,0.16)" : undefined,
-                      }}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gap: 8 }}>
-            <div className="muted" style={{ fontSize: 13 }}>
-              Difficulty
-            </div>
-
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {difficulties.map((diff) => {
-                const isActive = diff === selectedDifficulty;
-                const count =
-                  diff === "All" ? totalInSelectedCategory : (countsByDifficulty[diff] ?? 0);
-
-                return (
-                  <button
-                    key={diff}
-                    className={isActive ? "btn" : "btn btn-ghost"}
-                    onClick={() => onSelectDifficulty(diff)}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-                    title={diff === "All" ? "Show all difficulties" : `Show ${diff} tests`}
-                  >
-                    <span>{diff}</span>
-                    <span
-                      className="badge"
-                      style={{
-                        background: isActive ? "rgba(255,255,255,0.16)" : undefined,
-                      }}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        <div className="muted" style={{ fontSize: 13 }}>
+          Tip: category is the primary browsing mode; difficulty narrows results within
+          the selected category.
         </div>
       </div>
     </div>
