@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import challengesData from "../data/challengesData";
 import "../styles/components.css";
 import "../styles/theme.css";
+import CodeRunner from "../components/CodeRunner";
 
 const STORAGE_KEY = "challengeAttemptsV2";
 
@@ -228,6 +229,7 @@ export default function ChallengesPage() {
         filteredChallenges.map((challenge) => {
           const attempted = !!attempts[challenge.id];
           const isCorrect = attempted && attempts[challenge.id].isCorrect;
+          // Main challenge block
           return (
             <section key={challenge.id} style={multiBoxStyle}>
               <div style={{ display: "flex", alignItems: "center" }}>
@@ -276,6 +278,11 @@ export default function ChallengesPage() {
                   disabled={isCorrect}
                   spellCheck="false"
                   autoFocus={false}
+                />
+                {/* NEW: CodeRunner sandbox for executing code safely */}
+                <CodeRunner
+                  code={userCode[challenge.id] ?? (attempts[challenge.id]?.userCode || challenge.starterCode || "")}
+                  disabled={isCorrect}
                 />
                 <button
                   type="submit"
