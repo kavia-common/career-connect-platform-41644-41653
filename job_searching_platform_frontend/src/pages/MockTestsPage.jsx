@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { mockTests } from "../data/mockTestsData";
+import { mockTestCategories, mockTests } from "../data/mockTestsData";
 
 const STORAGE_KEY = "cc.mockTests.progress.v1";
 
@@ -19,6 +19,7 @@ function safeParseJson(raw, fallback) {
 export default function MockTestsPage() {
   const [progressByTestId, setProgressByTestId] = useState({});
   const [activeTestId, setActiveTestId] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   // Load persisted progress once.
   useEffect(() => {
@@ -30,6 +31,27 @@ export default function MockTestsPage() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(progressByTestId));
   }, [progressByTestId]);
+
+  const allCategories = useMemo(() => {
+    // Prefer curated export, but keep it resilient if dataset changes.
+    const derived = Array.from(
+      new Set(mockTests.map((t) => t.category).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
+
+    // Ensure "All" is always present and categories are de-duplicated.
+    const fromExport = Array.isArray(mockTestCategories)
+      ? mockTestCategories
+      : ["All", ...derived];
+
+    const normalized = Array.from(new Set(fromExport.filter(Boolean)));
+    if (!normalized.includes("All")) normalized.unshift("All");
+    return normalized;
+  }, []);
+
+  const filteredTests = useMemo(() => {
+    if (!selectedCategory || selectedCategory === "All") return mockTests;
+    return mockTests.filter((t) => t.category === selectedCategory);
+  }, [selectedCategory]);
 
   const activeTest = useMemo(
     () => mockTests.find((t) => t.id === activeTestId) || null,
@@ -199,16 +221,28 @@ export default function MockTestsPage() {
     </div>
   );
 
+  const categoryBar = !activeTest ? (
+    <CategoryFilterBar
+      categories={allCategories}
+      selectedCategory={selectedCategory}
+      onSelectCategory={setSelectedCategory}
+      tests={mockTests}
+      filteredCount={filteredTests.length}
+    />
+  ) : null;
+
   return (
     <div className="container" style={{ display: "grid", gap: 12 }}>
       {pageHeader}
+      {categoryBar}
 
       {!activeTest ? (
         <TestsList
-          tests={mockTests}
+          tests={filteredTests}
           progressByTestId={progressByTestId}
           onStartOrResume={startOrResumeTest}
           onReset={resetTest}
+          selectedCategory={selectedCategory}
         />
       ) : (
         <TestRunner
@@ -242,7 +276,107 @@ function countAnswered(test, progress) {
   return answered;
 }
 
-function TestsList({ tests, progressByTestId, onStartOrResume, onReset }) {
+function CategoryFilterBar({
+  categories,
+  selectedCategory,
+  onSelectCategory,
+  tests,
+  filteredCount,
+}) {
+  const countsByCategory = useMemo(() => {
+    const counts = {};
+    for (const t of tests) {
+      const cat = t.category || "Other";
+      counts[cat] = (counts[cat] || 0) + 1;
+    }
+    return counts;
+  }, [tests]);
+
+  return (
+    <div className="card">
+      <div
+        className="card-body"
+        style={{
+          display: "grid",
+          gap: 10,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 10,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
+          <div className="h2" style={{ margin: 0 }}>
+            Browse by category
+          </div>
+
+          <div className="muted" style={{ fontSize: 13 }}>
+            Showing <strong>{filteredCount}</strong> of <strong>{tests.length}</strong>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {categories.map((cat) => {
+            const isActive = cat === selectedCategory;
+            const count =
+              cat === "All"
+                ? tests.length
+                : (countsByCategory[cat] ?? 0);
+
+            return (
+              <button
+                key={cat}
+                className={isActive ? "btn" : "btn btn-ghost"}
+                onClick={() => onSelectCategory(cat)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+                title={
+                  cat === "All" ? "Show all tests" : `Show ${cat} tests`
+                }
+              >
+                <span>{cat}</span>
+                <span
+                  className="badge"
+                  style={{
+                    background: isActive ? "rgba(255,255,255,0.16)" : undefined,
+                  }}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TestsList({
+  tests,
+  progressByTestId,
+  onStartOrResume,
+  onReset,
+  selectedCategory,
+}) {
+  const emptyState = (
+    <div className="card" style={{ border: "1px solid rgba(0,0,0,0.06)" }}>
+      <div className="card-body" style={{ display: "grid", gap: 8 }}>
+        <div className="h3" style={{ margin: 0 }}>
+          No tests found
+        </div>
+        <div className="muted">
+          {selectedCategory && selectedCategory !== "All"
+            ? `There are currently no tests in the "${selectedCategory}" category.`
+            : "There are currently no tests to display."}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="card">
       <div className="card-body" style={{ display: "grid", gap: 12 }}>
@@ -251,79 +385,101 @@ function TestsList({ tests, progressByTestId, onStartOrResume, onReset }) {
         </h2>
 
         <div style={{ display: "grid", gap: 10 }}>
-          {tests.map((t) => {
-            const progress = progressByTestId[String(t.id)];
-            const status = formatStatus(progress);
-            const answered = progress ? countAnswered(t, progress) : 0;
-            const isCompleted = progress?.status === "completed";
-            const primaryCta = isCompleted ? "Review results" : progress ? "Resume" : "Start";
+          {tests.length === 0
+            ? emptyState
+            : tests.map((t) => {
+                const progress = progressByTestId[String(t.id)];
+                const status = formatStatus(progress);
+                const answered = progress ? countAnswered(t, progress) : 0;
+                const isCompleted = progress?.status === "completed";
+                const primaryCta = isCompleted
+                  ? "Review results"
+                  : progress
+                    ? "Resume"
+                    : "Start";
 
-            return (
-              <div
-                key={t.id}
-                className="card"
-                style={{ border: "1px solid rgba(0,0,0,0.06)" }}
-              >
-                <div
-                  className="card-body"
-                  style={{
-                    display: "grid",
-                    gap: 10,
-                    gridTemplateColumns: "1fr auto",
-                    alignItems: "start",
-                  }}
-                >
-                  <div style={{ display: "grid", gap: 6 }}>
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      <div className="h3" style={{ margin: 0 }}>
-                        {t.title}
+                return (
+                  <div
+                    key={t.id}
+                    className="card"
+                    style={{ border: "1px solid rgba(0,0,0,0.06)" }}
+                  >
+                    <div
+                      className="card-body"
+                      style={{
+                        display: "grid",
+                        gap: 10,
+                        gridTemplateColumns: "1fr auto",
+                        alignItems: "start",
+                      }}
+                    >
+                      <div style={{ display: "grid", gap: 6 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 10,
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
+                          <div className="h3" style={{ margin: 0 }}>
+                            {t.title}
+                          </div>
+                          <span className="badge">{t.category || t.skill}</span>
+                        </div>
+
+                        <div
+                          className="muted"
+                          style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
+                        >
+                          <span>{t.totalQuestions} questions</span>
+                          <span>•</span>
+                          <span>{t.duration}</span>
+                          <span>•</span>
+                          <span>Status: {status}</span>
+                          {progress?.status === "in_progress" ? (
+                            <>
+                              <span>•</span>
+                              <span>
+                                Progress: {answered}/{t.questions.length}
+                              </span>
+                            </>
+                          ) : null}
+                          {progress?.status === "completed" ? (
+                            <>
+                              <span>•</span>
+                              <span>
+                                Score: {progress.score}/{t.questions.length}
+                              </span>
+                            </>
+                          ) : null}
+                        </div>
                       </div>
-                      <span className="badge">{t.skill}</span>
-                    </div>
 
-                    <div className="muted" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                      <span>{t.totalQuestions} questions</span>
-                      <span>•</span>
-                      <span>{t.duration}</span>
-                      <span>•</span>
-                      <span>Status: {status}</span>
-                      {progress?.status === "in_progress" ? (
-                        <>
-                          <span>•</span>
-                          <span>
-                            Progress: {answered}/{t.questions.length}
-                          </span>
-                        </>
-                      ) : null}
-                      {progress?.status === "completed" ? (
-                        <>
-                          <span>•</span>
-                          <span>
-                            Score: {progress.score}/{t.questions.length}
-                          </span>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                    <button className="btn" onClick={() => onStartOrResume(t.id)}>
-                      {primaryCta}
-                    </button>
-                    {progress ? (
-                      <button
-                        className="btn btn-ghost"
-                        onClick={() => onReset(t.id)}
-                        title="Reset removes local progress for this test"
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 8,
+                          justifyContent: "flex-end",
+                        }}
                       >
-                        Reset
-                      </button>
-                    ) : null}
+                        <button className="btn" onClick={() => onStartOrResume(t.id)}>
+                          {primaryCta}
+                        </button>
+                        {progress ? (
+                          <button
+                            className="btn btn-ghost"
+                            onClick={() => onReset(t.id)}
+                            title="Reset removes local progress for this test"
+                          >
+                            Reset
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
         </div>
 
         <div className="muted" style={{ fontSize: 13 }}>
@@ -377,7 +533,7 @@ function TestRunner({
               {test.title}
             </div>
             <div className="muted" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <span className="badge">{test.skill}</span>
+              <span className="badge">{test.category || test.skill}</span>
               <span>{total} questions</span>
               <span>•</span>
               <span>{test.duration}</span>
