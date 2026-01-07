@@ -11,6 +11,8 @@ function safeParseJson(raw, fallback) {
   }
 }
 
+const DIFFICULTY_OPTIONS = ["All", "Easy", "Medium", "Hard"];
+
 /**
  * PUBLIC_INTERFACE
  * Mock Tests page: list available mock tests, allow taking a test, track answers,
@@ -20,6 +22,7 @@ export default function MockTestsPage() {
   const [progressByTestId, setProgressByTestId] = useState({});
   const [activeTestId, setActiveTestId] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("All");
 
   // Load persisted progress once.
   useEffect(() => {
@@ -48,10 +51,34 @@ export default function MockTestsPage() {
     return normalized;
   }, []);
 
+  const allDifficulties = useMemo(() => {
+    // Keep UI stable ("All/Easy/Medium/Hard") but allow dataset drift safely.
+    const dataset = new Set(
+      mockTests
+        .map((t) => t.difficulty)
+        .filter((d) => typeof d === "string" && d.trim().length > 0)
+    );
+
+    // If dataset has unknown difficulty values, include them after the known ones.
+    const extras = Array.from(dataset).filter((d) => !DIFFICULTY_OPTIONS.includes(d));
+    return [...DIFFICULTY_OPTIONS, ...extras];
+  }, []);
+
   const filteredTests = useMemo(() => {
-    if (!selectedCategory || selectedCategory === "All") return mockTests;
-    return mockTests.filter((t) => t.category === selectedCategory);
-  }, [selectedCategory]);
+    return mockTests.filter((t) => {
+      const matchesCategory =
+        !selectedCategory || selectedCategory === "All"
+          ? true
+          : t.category === selectedCategory;
+
+      const matchesDifficulty =
+        !selectedDifficulty || selectedDifficulty === "All"
+          ? true
+          : t.difficulty === selectedDifficulty;
+
+      return matchesCategory && matchesDifficulty;
+    });
+  }, [selectedCategory, selectedDifficulty]);
 
   const activeTest = useMemo(
     () => mockTests.find((t) => t.id === activeTestId) || null,
@@ -221,11 +248,14 @@ export default function MockTestsPage() {
     </div>
   );
 
-  const categoryBar = !activeTest ? (
-    <CategoryFilterBar
+  const filterBars = !activeTest ? (
+    <FiltersPanel
       categories={allCategories}
+      difficulties={allDifficulties}
       selectedCategory={selectedCategory}
       onSelectCategory={setSelectedCategory}
+      selectedDifficulty={selectedDifficulty}
+      onSelectDifficulty={setSelectedDifficulty}
       tests={mockTests}
       filteredCount={filteredTests.length}
     />
@@ -234,7 +264,7 @@ export default function MockTestsPage() {
   return (
     <div className="container" style={{ display: "grid", gap: 12 }}>
       {pageHeader}
-      {categoryBar}
+      {filterBars}
 
       {!activeTest ? (
         <TestsList
@@ -243,6 +273,7 @@ export default function MockTestsPage() {
           onStartOrResume={startOrResumeTest}
           onReset={resetTest}
           selectedCategory={selectedCategory}
+          selectedDifficulty={selectedDifficulty}
         />
       ) : (
         <TestRunner
@@ -276,10 +307,21 @@ function countAnswered(test, progress) {
   return answered;
 }
 
-function CategoryFilterBar({
+function getDifficultyBadgeStyle(difficulty) {
+  // Keep within the current theme by using subtle tinted backgrounds (no new CSS needed).
+  if (difficulty === "Easy") return { background: "rgba(5, 150, 105, 0.10)", color: "#065F46" };
+  if (difficulty === "Medium") return { background: "rgba(55, 65, 81, 0.10)", color: "#374151" };
+  if (difficulty === "Hard") return { background: "rgba(220, 38, 38, 0.10)", color: "#991B1B" };
+  return undefined;
+}
+
+function FiltersPanel({
   categories,
+  difficulties,
   selectedCategory,
   onSelectCategory,
+  selectedDifficulty,
+  onSelectDifficulty,
   tests,
   filteredCount,
 }) {
@@ -292,15 +334,18 @@ function CategoryFilterBar({
     return counts;
   }, [tests]);
 
+  const countsByDifficulty = useMemo(() => {
+    const counts = {};
+    for (const t of tests) {
+      const diff = t.difficulty || "Other";
+      counts[diff] = (counts[diff] || 0) + 1;
+    }
+    return counts;
+  }, [tests]);
+
   return (
     <div className="card">
-      <div
-        className="card-body"
-        style={{
-          display: "grid",
-          gap: 10,
-        }}
-      >
+      <div className="card-body" style={{ display: "grid", gap: 12 }}>
         <div
           style={{
             display: "flex",
@@ -311,7 +356,7 @@ function CategoryFilterBar({
           }}
         >
           <div className="h2" style={{ margin: 0 }}>
-            Browse by category
+            Browse tests
           </div>
 
           <div className="muted" style={{ fontSize: 13 }}>
@@ -319,36 +364,74 @@ function CategoryFilterBar({
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {categories.map((cat) => {
-            const isActive = cat === selectedCategory;
-            const count =
-              cat === "All"
-                ? tests.length
-                : (countsByCategory[cat] ?? 0);
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ display: "grid", gap: 8 }}>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Category
+            </div>
 
-            return (
-              <button
-                key={cat}
-                className={isActive ? "btn" : "btn btn-ghost"}
-                onClick={() => onSelectCategory(cat)}
-                style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-                title={
-                  cat === "All" ? "Show all tests" : `Show ${cat} tests`
-                }
-              >
-                <span>{cat}</span>
-                <span
-                  className="badge"
-                  style={{
-                    background: isActive ? "rgba(255,255,255,0.16)" : undefined,
-                  }}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {categories.map((cat) => {
+                const isActive = cat === selectedCategory;
+                const count =
+                  cat === "All" ? tests.length : (countsByCategory[cat] ?? 0);
+
+                return (
+                  <button
+                    key={cat}
+                    className={isActive ? "btn" : "btn btn-ghost"}
+                    onClick={() => onSelectCategory(cat)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+                    title={cat === "All" ? "Show all tests" : `Show ${cat} tests`}
+                  >
+                    <span>{cat}</span>
+                    <span
+                      className="badge"
+                      style={{
+                        background: isActive ? "rgba(255,255,255,0.16)" : undefined,
+                      }}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gap: 8 }}>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Difficulty
+            </div>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {difficulties.map((diff) => {
+                const isActive = diff === selectedDifficulty;
+                const count =
+                  diff === "All" ? tests.length : (countsByDifficulty[diff] ?? 0);
+
+                return (
+                  <button
+                    key={diff}
+                    className={isActive ? "btn" : "btn btn-ghost"}
+                    onClick={() => onSelectDifficulty(diff)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+                    title={diff === "All" ? "Show all difficulties" : `Show ${diff} tests`}
+                  >
+                    <span>{diff}</span>
+                    <span
+                      className="badge"
+                      style={{
+                        background: isActive ? "rgba(255,255,255,0.16)" : undefined,
+                      }}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -361,6 +444,7 @@ function TestsList({
   onStartOrResume,
   onReset,
   selectedCategory,
+  selectedDifficulty,
 }) {
   const emptyState = (
     <div className="card" style={{ border: "1px solid rgba(0,0,0,0.06)" }}>
@@ -371,7 +455,9 @@ function TestsList({
         <div className="muted">
           {selectedCategory && selectedCategory !== "All"
             ? `There are currently no tests in the "${selectedCategory}" category.`
-            : "There are currently no tests to display."}
+            : selectedDifficulty && selectedDifficulty !== "All"
+              ? `There are currently no "${selectedDifficulty}" difficulty tests.`
+              : "There are currently no tests to display."}
         </div>
       </div>
     </div>
@@ -426,6 +512,15 @@ function TestsList({
                             {t.title}
                           </div>
                           <span className="badge">{t.category || t.skill}</span>
+                          {t.difficulty ? (
+                            <span
+                              className="badge"
+                              style={getDifficultyBadgeStyle(t.difficulty)}
+                              title={`Difficulty: ${t.difficulty}`}
+                            >
+                              {t.difficulty}
+                            </span>
+                          ) : null}
                         </div>
 
                         <div
@@ -534,6 +629,11 @@ function TestRunner({
             </div>
             <div className="muted" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <span className="badge">{test.category || test.skill}</span>
+              {test.difficulty ? (
+                <span className="badge" style={getDifficultyBadgeStyle(test.difficulty)}>
+                  {test.difficulty}
+                </span>
+              ) : null}
               <span>{total} questions</span>
               <span>•</span>
               <span>{test.duration}</span>

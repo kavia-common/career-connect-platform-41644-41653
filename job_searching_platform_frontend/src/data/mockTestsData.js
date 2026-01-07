@@ -4,6 +4,7 @@
  * Notes:
  * - This dataset is intentionally static (no backend dependency).
  * - Each test has a "category" used for filtering in the UI.
+ * - Each test also has a "difficulty" (Easy | Medium | Hard) used for filtering in the UI.
  */
 
 export const mockTests = [
@@ -11,6 +12,7 @@ export const mockTests = [
     id: 1,
     title: "React Fundamentals",
     category: "React",
+    difficulty: "Easy",
     skill: "React",
     totalQuestions: 5,
     duration: "10 mins",
@@ -66,6 +68,7 @@ export const mockTests = [
     id: 2,
     title: "React State & Effects",
     category: "React",
+    difficulty: "Medium",
     skill: "React",
     totalQuestions: 6,
     duration: "12 mins",
@@ -140,6 +143,7 @@ export const mockTests = [
     id: 3,
     title: "JavaScript Essentials",
     category: "JavaScript",
+    difficulty: "Easy",
     skill: "JavaScript",
     totalQuestions: 6,
     duration: "12 mins",
@@ -164,7 +168,12 @@ export const mockTests = [
       {
         id: 3,
         question: "Which method converts JSON text into an object?",
-        options: ["JSON.toObject()", "JSON.parse()", "JSON.stringify()", "Object.json()"],
+        options: [
+          "JSON.toObject()",
+          "JSON.parse()",
+          "JSON.stringify()",
+          "Object.json()",
+        ],
         correctAnswer: 1,
       },
       {
@@ -206,6 +215,7 @@ export const mockTests = [
     id: 4,
     title: "Modern JavaScript (ES6+)",
     category: "JavaScript",
+    difficulty: "Medium",
     skill: "JavaScript",
     totalQuestions: 5,
     duration: "10 mins",
@@ -223,8 +233,7 @@ export const mockTests = [
       },
       {
         id: 2,
-        question:
-          "What is destructuring used for?",
+        question: "What is destructuring used for?",
         options: [
           "Removing elements from an array",
           "Extracting values from arrays/objects into variables",
@@ -272,6 +281,7 @@ export const mockTests = [
     id: 5,
     title: "HTML & CSS Fundamentals",
     category: "HTML/CSS",
+    difficulty: "Easy",
     skill: "HTML/CSS",
     totalQuestions: 6,
     duration: "12 mins",
@@ -328,6 +338,7 @@ export const mockTests = [
     id: 6,
     title: "Responsive Layouts (CSS)",
     category: "HTML/CSS",
+    difficulty: "Medium",
     skill: "HTML/CSS",
     totalQuestions: 5,
     duration: "10 mins",
@@ -388,6 +399,7 @@ export const mockTests = [
     id: 7,
     title: "Node.js Basics",
     category: "Node.js",
+    difficulty: "Easy",
     skill: "Node.js",
     totalQuestions: 6,
     duration: "12 mins",
@@ -406,7 +418,12 @@ export const mockTests = [
       {
         id: 2,
         question: "Which module system is traditional in Node.js (pre-ESM)?",
-        options: ["AMD", "CommonJS (require/module.exports)", "SystemJS", "UMD only"],
+        options: [
+          "AMD",
+          "CommonJS (require/module.exports)",
+          "SystemJS",
+          "UMD only",
+        ],
         correctAnswer: 1,
       },
       {
@@ -449,6 +466,7 @@ export const mockTests = [
     id: 8,
     title: "Node.js APIs & HTTP",
     category: "Node.js",
+    difficulty: "Hard",
     skill: "Node.js",
     totalQuestions: 5,
     duration: "10 mins",
