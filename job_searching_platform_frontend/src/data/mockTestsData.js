@@ -17,7 +17,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 1,
-    title: "React Fundamentals: Components, JSX & Props",
+    title: "React",
     category: "React",
     difficulty: "Easy",
     skill: "React",
@@ -138,7 +138,7 @@ export const mockTests = [
   },
   {
     id: 2,
-    title: "React Hooks Mastery: useState, useEffect & Patterns",
+    title: "Hooks",
     category: "React",
     difficulty: "Medium",
     skill: "React",
@@ -283,7 +283,7 @@ export const mockTests = [
   },
   {
     id: 9,
-    title: "Advanced React: Performance, Memoization & Rendering",
+    title: "Performance",
     category: "React",
     difficulty: "Hard",
     skill: "React",
@@ -420,7 +420,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 3,
-    title: "JavaScript Essentials: Types, Arrays & Fundamentals",
+    title: "JavaScript",
     category: "JavaScript",
     difficulty: "Easy",
     skill: "JavaScript",
@@ -546,7 +546,7 @@ export const mockTests = [
   },
   {
     id: 4,
-    title: "Modern JavaScript: ES6+, Modules & Syntax",
+    title: "ES6",
     category: "JavaScript",
     difficulty: "Medium",
     skill: "JavaScript",
@@ -687,7 +687,7 @@ export const mockTests = [
   },
   {
     id: 10,
-    title: "Advanced JavaScript: Async, Promises & Event Loop",
+    title: "Async",
     category: "JavaScript",
     difficulty: "Hard",
     skill: "JavaScript",
@@ -827,7 +827,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 5,
-    title: "HTML & CSS Basics: Semantics, Selectors & Layout",
+    title: "HTMLCSS",
     category: "HTML/CSS",
     difficulty: "Easy",
     skill: "HTML/CSS",
@@ -938,7 +938,7 @@ export const mockTests = [
   },
   {
     id: 6,
-    title: "Responsive CSS: Flexbox, Grid & Media Queries",
+    title: "Responsive",
     category: "HTML/CSS",
     difficulty: "Medium",
     skill: "HTML/CSS",
@@ -1073,7 +1073,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 7,
-    title: "Node.js Foundations: Runtime, Modules & npm",
+    title: "Node",
     category: "Node.js",
     difficulty: "Easy",
     skill: "Node.js",
@@ -1194,7 +1194,7 @@ export const mockTests = [
   },
   {
     id: 8,
-    title: "Backend & APIs in Node: HTTP, Express & REST Concepts",
+    title: "APIs",
     category: "Node.js",
     difficulty: "Hard",
     skill: "Node.js",
@@ -1314,7 +1314,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 11,
-    title: "Java Basics: Syntax, Types & OOP Foundations",
+    title: "Java",
     category: "Java",
     difficulty: "Easy",
     skill: "Java",
@@ -1425,7 +1425,7 @@ export const mockTests = [
   },
   {
     id: 12,
-    title: "Intermediate Java: Collections, Generics & Core Concepts",
+    title: "Collections",
     category: "Java",
     difficulty: "Medium",
     skill: "Java",
@@ -1535,7 +1535,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 13,
-    title: "Python Basics: Data Types, Functions & Syntax",
+    title: "Python",
     category: "Python",
     difficulty: "Easy",
     skill: "Python",
@@ -1646,7 +1646,7 @@ export const mockTests = [
   },
   {
     id: 14,
-    title: "Intermediate Python: Collections, Comprehensions & Idioms",
+    title: "Comprehensions",
     category: "Python",
     difficulty: "Medium",
     skill: "Python",
@@ -1781,7 +1781,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 15,
-    title: "Machine Learning Fundamentals: Supervised vs Unsupervised",
+    title: "ML",
     category: "Machine Learning",
     difficulty: "Easy",
     skill: "Machine Learning",
@@ -1922,7 +1922,7 @@ export const mockTests = [
   },
   {
     id: 16,
-    title: "Model Evaluation: Precision, Recall, F1 & Cross-Validation",
+    title: "Evaluation",
     category: "Machine Learning",
     difficulty: "Medium",
     skill: "Machine Learning",
