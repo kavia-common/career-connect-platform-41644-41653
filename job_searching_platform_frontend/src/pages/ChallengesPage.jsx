@@ -4,11 +4,10 @@ import "../styles/components.css";
 import "../styles/theme.css";
 import CodeRunner from "../components/CodeRunner";
 
-const STORAGE_KEY = "challengeAttemptsV2";
+const STORAGE_KEY = "challengeAttemptsV3";
 
 // PUBLIC_INTERFACE
 function getStoredAttempts() {
-  // Loads user attempts from localStorage for persistence
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
   } catch {
@@ -18,7 +17,6 @@ function getStoredAttempts() {
 
 // PUBLIC_INTERFACE
 function saveAttempt(challengeId, userCode, isCorrect) {
-  // Stores user attempts in localStorage (per challenge)
   const attempts = getStoredAttempts();
   attempts[challengeId] = {
     userCode,
@@ -27,30 +25,6 @@ function saveAttempt(challengeId, userCode, isCorrect) {
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(attempts));
 }
-
-// Simple frontend code validation
-// PUBLIC_INTERFACE
-function validateCodeAnswer({ userCode, expectedOutput, keywords }) {
-  const trimmedUser = userCode.trim().replace(/\s+/g, " ").toLowerCase();
-  const trimmedExpected = expectedOutput.trim().replace(/\s+/g, " ").toLowerCase();
-
-  // Accepts user answer if it has expectedOutput or all keywords present (super simple)
-  if (trimmedUser.includes(trimmedExpected)) {
-    return true;
-  }
-  if (Array.isArray(keywords) && keywords.length > 0) {
-    let allKeywordsPresent = keywords.every((kw) =>
-      trimmedUser.includes(kw.toLowerCase())
-    );
-    if (allKeywordsPresent) return true;
-  }
-  return false;
-}
-
-// PUBLIC_INTERFACE
-const categoryList = [
-  ...new Set(challengesData.map((c) => c.category)),
-];
 
 const theme = {
   primary: "#374151",
@@ -75,18 +49,6 @@ const codeInputStyle = {
   fontSize: "1em",
 };
 
-const badgeStyle = {
-  padding: "0.25em 0.75em",
-  borderRadius: "100px",
-  background: theme.primary,
-  color: theme.surface,
-  fontSize: "0.8em",
-  fontWeight: 600,
-  marginLeft: "0.5em",
-  marginBottom: "3px",
-  display: "inline-block",
-};
-
 const multiBoxStyle = {
   background: theme.surface,
   boxShadow: "0 1px 8px 0 #37415115",
@@ -95,39 +57,59 @@ const multiBoxStyle = {
   padding: "1.5em 1.2em",
 };
 
-export default function ChallengesPage() {
-  // Category filter state
-  const [activeCategory, setActiveCategory] = useState("All");
+function runUserFunction(userCode, funcName, testCases) {
+  // Evaluates user code in an isolated Function context for all test cases
+  // Returns {pass: boolean, results: Array<{expected, actual, pass}>}
+  try {
+    // eslint-disable-next-line no-new-func
+    const fullCode = `
+      ${userCode}
+      return typeof ${funcName} === "function" ? ${funcName} : null;
+    `;
+    const userFunc = new Function(fullCode)();
+    if (typeof userFunc !== "function") {
+      return { pass: false, results: testCases.map(tc => ({ ...tc, actual: undefined, pass: false, reason: "Function not found" })) };
+    }
+    const results = testCases.map(tc => {
+      let actual, pass;
+      try {
+        actual = userFunc(...tc.input);
+        // Use deep equality for primitive values, and special handling for objects
+        pass = (typeof tc.output === "object" && tc.output !== null)
+          ? JSON.stringify(actual) === JSON.stringify(tc.output)
+          : actual === tc.output;
+      } catch (e) {
+        return { ...tc, actual: undefined, pass: false, reason: e.message };
+      }
+      return { ...tc, actual, pass };
+    });
+    return { pass: results.every(r => r.pass), results };
+  } catch (err) {
+    return { pass: false, results: testCases.map(tc => ({ ...tc, actual: undefined, pass: false, reason: err.message })) };
+  }
+}
 
+export default function ChallengesPage() {
   // User code answers per challenge: { [id]: userCode }
   const [userCode, setUserCode] = useState({});
-
   // Challenge attempts state: { [id]: { userCode, isCorrect, timestamp } }
   const [attempts, setAttempts] = useState({});
-
-  // Flash feedback per challenge
+  // Feedback/results per challenge
   const [feedback, setFeedback] = useState({});
 
-  // XP state
-  const [xp, setXP] = useState(0);
-
-  // Load attempts from localStorage at component mount
   useEffect(() => {
-    const atpts = getStoredAttempts();
-    setAttempts(atpts);
-    // Calculate total earned XP
-    let earnedXP = 0;
-    challengesData.forEach((ch) => {
-      if (atpts[ch.id]?.isCorrect) earnedXP += ch.xp;
-    });
-    setXP(earnedXP);
+    setAttempts(getStoredAttempts());
   }, []);
 
-  // Handler for typing code answer
   const handleCodeChange = (id, value) => {
     setUserCode((prev) => ({
       ...prev,
       [id]: value,
+    }));
+    // Reset feedback on typing
+    setFeedback((prev) => ({
+      ...prev,
+      [id]: undefined,
     }));
   };
 
@@ -135,153 +117,64 @@ export default function ChallengesPage() {
   const handleSubmit = (challenge) => (e) => {
     e.preventDefault();
     const codeAns = userCode[challenge.id] || "";
-    const result = validateCodeAnswer({
-      userCode: codeAns,
-      expectedOutput: challenge.expectedOutput,
-      keywords: challenge.keywords,
-    });
+    // Evaluate function for all test cases
+    const { pass, results } = runUserFunction(codeAns, challenge.funcName, challenge.testCases);
     setFeedback((prev) => ({
       ...prev,
-      [challenge.id]: result ? "Correct! XP earned." : "Try again.",
+      [challenge.id]: { pass, results },
     }));
-    saveAttempt(challenge.id, codeAns, result);
+    saveAttempt(challenge.id, codeAns, pass);
     setAttempts((prev) => ({
       ...prev,
       [challenge.id]: {
         userCode: codeAns,
-        isCorrect: result,
+        isCorrect: pass,
         timestamp: new Date().toISOString(),
       },
     }));
-    // Update XP if correct for first time
-    if (result && !(attempts[challenge.id] && attempts[challenge.id].isCorrect)) {
-      setXP((prevXP) => prevXP + challenge.xp);
-    }
   };
-
-  const filteredChallenges =
-    activeCategory === "All"
-      ? challengesData
-      : challengesData.filter((ch) => ch.category === activeCategory);
 
   return (
     <main style={{ background: theme.background, minHeight: "100vh", padding: "1.6em 6vw" }}>
       <h1 style={{ color: theme.primary, fontWeight: 800, fontSize: "2.1em" }}>
-        Coding Challenges
-        <span style={badgeStyle}>XP: {xp}</span>
+        Gamified Coding Challenges
       </h1>
       <div style={{ margin: "1.2em 0 2em 0" }}>
         <div style={{ display: "flex", gap: "20px", alignItems: "end", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label htmlFor="category-dropdown" className="muted" style={{ fontSize: 13, marginBottom: 6 }}>
-              Category
-            </label>
-            <select
-              id="category-dropdown"
-              value={activeCategory}
-              onChange={(e) => setActiveCategory(e.target.value)}
-              className="input"
-              style={{
-                minWidth: 190,
-                border: `1px solid ${theme.secondary}`,
-                borderRadius: 6,
-                padding: "0.4em 0.75em",
-                color: theme.text,
-                background: theme.surface,
-                fontSize: "1em",
-                fontWeight: 500,
-              }}
-            >
-              <option value="All">All</option>
-              {categoryList.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div className="muted" style={{ marginBottom: 6, fontSize: 13 }}>&nbsp;</div>
-            <button
-              type="button"
-              className="btn btn-ghost"
-              style={{
-                padding: "0.5em 1.4em",
-                background: "none",
-                color: (activeCategory === "All") ? theme.secondary : theme.primary,
-                border: `1px solid ${(activeCategory === "All") ? "#eee" : theme.secondary}`,
-                fontWeight: 600,
-                fontSize: "1em",
-                borderRadius: 6,
-                cursor: (activeCategory === "All") ? "not-allowed" : "pointer",
-                opacity: (activeCategory === "All") ? 0.7 : 1,
-              }}
-              onClick={() => setActiveCategory("All")}
-              disabled={activeCategory === "All"}
-              title="Reset category filter to All"
-            >
-              Reset
-            </button>
-          </div>
+          {/* Category and XP removed as per new schema */}
         </div>
       </div>
-      {filteredChallenges.length === 0 ? (
-        <div>No coding challenges in this category yet.</div>
+      {challengesData.length === 0 ? (
+        <div>No coding challenges provided.</div>
       ) : (
-        filteredChallenges.map((challenge) => {
+        challengesData.map((challenge) => {
           const attempted = !!attempts[challenge.id];
           const isCorrect = attempted && attempts[challenge.id].isCorrect;
-          // Main challenge block
+          const fb = feedback[challenge.id];
           return (
             <section key={challenge.id} style={multiBoxStyle}>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <div
-                  style={{
-                    fontWeight: 600,
-                    fontSize: "1.01em",
-                    color: theme.primary,
-                    flex: 1,
-                  }}
-                  dangerouslySetInnerHTML={{ __html: challenge.prompt }}
-                />
-                <span style={{
-                  ...badgeStyle,
-                  background: isCorrect ? theme.success : theme.error,
-                  marginLeft: "24px"
-                }}>
-                  {isCorrect ? "Completed" : attempted ? "In Progress" : "Unattempted"}
-                </span>
-                <span style={{ ...badgeStyle, background: theme.secondary, marginLeft: "1em" }}>
-                  +{challenge.xp} XP
-                </span>
+              <h2 style={{
+                color: theme.primary,
+                fontSize: "1.13em",
+                fontWeight: 700,
+                margin: 0,
+                marginBottom: 5,
+              }}>{challenge.title || challenge.funcName}</h2>
+              <div style={{ color: theme.text, marginBottom: 8 }}>
+                {challenge.description}
               </div>
               <form onSubmit={handleSubmit(challenge)} style={{ marginTop: "1em" }}>
-                {challenge.starterCode && (
-                  <div style={{
-                    background: "#F3F4F6",
-                    border: `1px solid ${theme.secondary}`,
-                    borderRadius: "6px",
-                    padding: "0.75em",
-                    marginBottom: "0.6em",
-                    fontFamily: "monospace",
-                    fontSize: "0.96em",
-                  }}>
-                    <div style={{ color: theme.secondary, marginBottom: 2 }}>
-                      <strong>Starter code:</strong>
-                    </div>
-                    <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{challenge.starterCode}</pre>
-                  </div>
-                )}
                 <textarea
                   value={userCode[challenge.id] ?? (attempts[challenge.id]?.userCode || "")}
                   onChange={(e) => handleCodeChange(challenge.id, e.target.value)}
                   style={codeInputStyle}
-                  placeholder="Type your code answer here..."
+                  placeholder={`Write your function: function ${challenge.funcName}(${challenge.testCases[0]?.input?.map((_,i)=>`arg${i+1}`).join(",") || ""}) { ... }`}
                   disabled={isCorrect}
                   spellCheck="false"
                   autoFocus={false}
                 />
-                {/* NEW: CodeRunner sandbox for executing code safely */}
                 <CodeRunner
-                  code={userCode[challenge.id] ?? (attempts[challenge.id]?.userCode || challenge.starterCode || "")}
+                  code={userCode[challenge.id] ?? (attempts[challenge.id]?.userCode || "")}
                   disabled={isCorrect}
                 />
                 <button
@@ -296,29 +189,65 @@ export default function ChallengesPage() {
                     cursor: isCorrect ? "default" : "pointer",
                     fontWeight: 600,
                     letterSpacing: ".03em",
+                    marginTop: 12,
                   }}
                 >
                   {isCorrect ? "Submitted" : "Submit"}
                 </button>
-                {feedback[challenge.id] && (
+                {fb && (
                   <span
                     style={{
                       marginLeft: "1em",
-                      color: feedback[challenge.id].startsWith("Correct")
-                        ? theme.success
-                        : theme.error,
+                      color: fb.pass ? theme.success : theme.error,
                       fontWeight: 600,
                     }}
                   >
-                    {feedback[challenge.id]}
+                    {fb.pass
+                      ? "All tests passed!"
+                      : "Some test cases failed (see below)."}
                   </span>
                 )}
                 {isCorrect && (
                   <div style={{ color: theme.success, marginTop: "0.75em" }}>
-                    ✔️ Correct! You earned {challenge.xp} XP.
+                    ✔️ Correct!
                   </div>
                 )}
               </form>
+              {/* Per-test-case feedback */}
+              {(fb && fb.results.length > 0) && (
+                <div style={{
+                  marginTop: 16,
+                  background: "#F3F4F6",
+                  border: `1px solid ${theme.secondary}`,
+                  borderRadius: "6px",
+                  padding: "0.75em",
+                  fontFamily: "monospace",
+                  fontSize: "0.99em",
+                }}>
+                  <div style={{ fontWeight: 500, color: theme.primary, marginBottom: 6 }}>
+                    Test Cases:
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {fb.results.map((tc, idx) => (
+                      <li key={idx} style={{ marginBottom: 2 }}>
+                        <span style={{ fontWeight: 600, color: tc.pass ? theme.success : theme.error }}>
+                          [{tc.pass ? "✓" : "✗"}]
+                        </span>{" "}
+                        <span>
+                          <strong>Input:</strong> {JSON.stringify(tc.input)}
+                          {" | "}
+                          <strong>Expected:</strong> {JSON.stringify(tc.output)}
+                          {" | "}
+                          <strong>Actual:</strong> {JSON.stringify(tc.actual)}
+                          {tc.reason && (
+                            <span style={{ color: theme.error }}> ({tc.reason})</span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {attempted && !isCorrect && attempts[challenge.id].userCode && (
                 <div style={{ color: theme.error, marginTop: "0.6em" }}>
                   Last attempt: <code>{attempts[challenge.id].userCode}</code>
