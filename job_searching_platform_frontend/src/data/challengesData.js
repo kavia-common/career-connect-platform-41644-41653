@@ -1,5 +1,4 @@
 const challengesData = [
-  // New Challenge 1: Max in Array
   {
     id: 1001,
     title: "Maximum in Array",
@@ -10,10 +9,11 @@ const challengesData = [
       { input: [[-5, -11, -3, -7]], output: -3 },
       { input: [[42]], output: 42 },
       { input: [[2, 2, 2]], output: 2 },
-      { input: [[1, 999, 2, 3]], output: 999 },
+      { input: [[1, 999, 2, 3]], output: 999 }
     ],
+    category: "JavaScript",
+    xp: 50
   },
-  // New Challenge 2: Factorial
   {
     id: 1002,
     title: "Factorial",
@@ -24,10 +24,11 @@ const challengesData = [
       { input: [1], output: 1 },
       { input: [3], output: 6 },
       { input: [5], output: 120 },
-      { input: [7], output: 5040 },
+      { input: [7], output: 5040 }
     ],
+    category: "Python",
+    xp: 70
   },
-  // New Challenge 3: Palindrome Check
   {
     id: 1003,
     title: "Palindrome",
@@ -39,10 +40,11 @@ const challengesData = [
       { input: ["level"], output: true },
       { input: ["hello"], output: false },
       { input: ["a"], output: true },
-      { input: [""], output: true },
+      { input: [""], output: true }
     ],
+    category: "JavaScript",
+    xp: 60
   },
-  // New Challenge 4: Nth Fibonacci Number
   {
     id: 1004,
     title: "Fibonacci Nth",
@@ -53,10 +55,11 @@ const challengesData = [
       { input: [1], output: 1 },
       { input: [5], output: 5 },
       { input: [10], output: 55 },
-      { input: [15], output: 610 },
+      { input: [15], output: 610 }
     ],
+    category: "React",
+    xp: 80
   },
-  // New Challenge 5: Count Vowels
   {
     id: 1005,
     title: "Count Vowels",
@@ -67,10 +70,11 @@ const challengesData = [
       { input: ["sky"], output: 0 },
       { input: ["AEIOUaeiou"], output: 10 },
       { input: ["xyz"], output: 0 },
-      { input: [""], output: 0 },
+      { input: [""], output: 0 }
     ],
+    category: "Python",
+    xp: 50
   },
-  // New Challenge 6: Merge and Sort Arrays
   {
     id: 1006,
     title: "Merge and Sort Arrays",
@@ -81,10 +85,11 @@ const challengesData = [
       { input: [[], [5, 3, 1]], output: [1,3,5] },
       { input: [[9], []], output: [9] },
       { input: [[-2, 0], [1]], output: [-2,0,1] },
-      { input: [[], []], output: [] },
+      { input: [[], []], output: [] }
     ],
+    category: "Java",
+    xp: 55
   },
-  // New Challenge 7: Unique Elements
   {
     id: 1007,
     title: "Unique Elements",
@@ -95,10 +100,11 @@ const challengesData = [
       { input: [[42, 42, 42]], output: [42] },
       { input: [[3, 2, 1, 2, 3, 4]], output: [3,2,1,4] },
       { input: [[]], output: [] },
-      { input: [[7,8,9]], output: [7,8,9] },
+      { input: [[7,8,9]], output: [7,8,9] }
     ],
+    category: "Python",
+    xp: 60
   },
-  // New Challenge 8: Sum Array
   {
     id: 1008,
     title: "Sum Array",
@@ -109,10 +115,11 @@ const challengesData = [
       { input: [[-5, 5]], output: 0 },
       { input: [[]], output: 0 },
       { input: [[10, 100, 1000]], output: 1110 },
-      { input: [[0]], output: 0 },
+      { input: [[0]], output: 0 }
     ],
+    category: "JavaScript",
+    xp: 40
   },
-  // New Challenge 9: Is Anagram
   {
     id: 1009,
     title: "Is Anagram",
@@ -123,10 +130,11 @@ const challengesData = [
       { input: ["Triangle", "Integral"], output: true },
       { input: ["apple", "pale"], output: false },
       { input: ["a gentleman", "elegant man"], output: true },
-      { input: ["hello", "world"], output: false },
+      { input: ["hello", "world"], output: false }
     ],
+    category: "Java",
+    xp: 70
   },
-  // New Challenge 10: Two Sum
   {
     id: 1010,
     title: "Two Sum",
@@ -137,9 +145,12 @@ const challengesData = [
       { input: [[1, 2, 3], 6], output: false },
       { input: [[-1, 0, 1], 0], output: true },
       { input: [[3], 6], output: false },
-      { input: [[], 10], output: false },
+      { input: [[], 10], output: false }
     ],
+    category: "JavaScript",
+    xp: 65
   },
+  // Old challenges below
   {
     id: 1,
     title: "Sum of Two Numbers",
@@ -148,7 +159,9 @@ const challengesData = [
     testCases: [
       { input: [2, 3], output: 5 },
       { input: [10, 5], output: 15 }
-    ]
+    ],
+    category: "JavaScript",
+    xp: 20
   },
   {
     id: 2,
@@ -158,7 +171,9 @@ const challengesData = [
     testCases: [
       { input: [4], output: true },
       { input: [7], output: false }
-    ]
+    ],
+    category: "Python",
+    xp: 25
   },
   {
     id: 3,
@@ -168,7 +183,9 @@ const challengesData = [
     testCases: [
       { input: ["hello"], output: "olleh" },
       { input: ["abc"], output: "cba" }
-    ]
+    ],
+    category: "Java",
+    xp: 30
   }
 ];
 

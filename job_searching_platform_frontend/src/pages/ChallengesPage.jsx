@@ -11,10 +11,16 @@ import {
   resetStreak,
   addToLeaderboard,
   getLeaderboard,
-  getInitialTimer
+  getInitialTimer,
+  getXP,
+  setXP,
+  addXP,
+  resetXP,
+  getCategoryOptions,
+  calculateXPToAdd
 } from "../utils/challengeGameUtils";
 
-// Executive Gray constants for inline quick styling
+// Executive Gray constants for styling
 const theme = {
   primary: "#374151",
   secondary: "#9CA3AF",
@@ -22,7 +28,7 @@ const theme = {
   surface: "#FFFFFF",
   text: "#111827",
   success: "#059669",
-  error: "#DC2626",
+  error: "#DC2626"
 };
 
 function formatTimer(seconds) {
@@ -43,9 +49,10 @@ export default function ChallengesPage() {
   const [attempted, setAttempted] = useState({});
   const [isCorrect, setIsCorrect] = useState({});
 
-  // Score, streak, leaderboard
+  // Score, streak, leaderboard, and XP
   const [score, setScoreState] = useState(getScore());
   const [streak, setStreakState] = useState(getStreak());
+  const [xp, setXPState] = useState(getXP());
   const [leaderboard, setLeaderboard] = useState(getLeaderboard());
   const [username, setUsername] = useState(() => (localStorage.getItem("challenge_user") || "").substring(0,32));
 
@@ -54,15 +61,22 @@ export default function ChallengesPage() {
   const [timerActive, setTimerActive] = useState(false);
   const timerRef = useRef(null);
 
+  // Category filter
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const categoryOptions = getCategoryOptions(challengesData);
+
   // On challenge change: reset code, feedback, timer etc
   useEffect(() => {
     setShowSolution(false);
-    setSelectedChallenge(challengesData[selectedIdx]);
+    setSelectedChallenge(filteredChallenges[selectedIdx] || filteredChallenges[0]);
     setTimeLeft(getInitialTimer());
     setTimerActive(true);
-    setUserCode(prev => ({ ...prev, [challengesData[selectedIdx].id]: "" }));
+    setUserCode(prev => ({
+      ...prev,
+      [(filteredChallenges[selectedIdx] || filteredChallenges[0])?.id]: ""
+    }));
     if (timerRef.current) clearInterval(timerRef.current);
-    // Timer interval management
+    // Timer
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -80,66 +94,82 @@ export default function ChallengesPage() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
     // eslint-disable-next-line
-  }, [selectedIdx]);
+  }, [selectedIdx, categoryFilter]);
 
   // Sync with localStorage for cross-tab
   useEffect(() => {
     const handler = () => {
       setScoreState(getScore());
       setStreakState(getStreak());
+      setXPState(getXP());
       setLeaderboard(getLeaderboard());
     };
     window.addEventListener("storage", handler);
     return () => window.removeEventListener("storage", handler);
   }, []);
 
-  // Handlers for scoring/timer/leaderboard on code submission
+  // Filtered list of challenges based on selected category
+  const filteredChallenges =
+    categoryFilter === "All"
+      ? challengesData
+      : challengesData.filter((ch) => ch.category === categoryFilter);
+
+  // On evaluation
   const handleEvaluation = (details) => {
-    const cid = selectedChallenge.id;
-    if (!timerActive || timeLeft === 0) return;
+    const currCh = filteredChallenges[selectedIdx] || filteredChallenges[0];
+    if (!currCh || !timerActive || timeLeft === 0) return;
+
     if (details.correct) {
       setShowSolution(false);
-      const newScore = incrementScore(10); // +10/solve
+      const newScore = incrementScore(10);
       setScoreState(newScore);
+
       const newStreak = incrementStreak();
       setStreakState(newStreak);
-      setIsCorrect(s => ({ ...s, [cid]: true }));
-      // Leaderboard
+
+      const xpAward = calculateXPToAdd(true, currCh); // pass=true
+      const newXP = addXP(xpAward);
+      setXPState(newXP);
+
+      setIsCorrect(s => ({ ...s, [currCh.id]: true }));
+      // Leaderboard (now with XP)
       if (username) {
-        setLeaderboard(addToLeaderboard(username, newScore));
+        setLeaderboard(addToLeaderboard(username, newScore, newXP));
       }
       setTimerActive(false); // Stop timer
     } else {
       setShowSolution(true);
-      setIsCorrect(s => ({ ...s, [cid]: false }));
+      setIsCorrect(s => ({ ...s, [currCh.id]: false }));
       resetStreak();
       setStreakState(0);
       setTimerActive(false);
     }
   };
 
-  // Score/streak reset all
+  // Score/streak/XP reset all
   const handleResetProgress = () => {
     resetScore();
     resetStreak();
+    resetXP();
     setScoreState(0);
     setStreakState(0);
+    setXPState(0);
     setLeaderboard([]);
   };
 
-  // Challenge list selection
+  // Challenge selection
   const handleSelectChallenge = (i) => {
     setSelectedIdx(i);
   };
 
-  // Username management
+  // Username
   const handleUsernameChange = e => {
     const name = e.target.value.substring(0,32);
     setUsername(name);
     localStorage.setItem("challenge_user", name);
   };
 
-  // Styling for timer
+  // Timer styling
   const timerColor =
     timeLeft === 0 ? theme.error :
     timeLeft <= 10 ? "#DC2626" :
@@ -152,7 +182,7 @@ export default function ChallengesPage() {
         <h2 style={{ color: theme.primary, fontWeight: 800, fontSize: "2em", margin: "0 0 26px 0" }}>
           Coding Challenges
         </h2>
-        {/* Score | streak | timer | name bar */}
+        {/* Score | Streak | XP | timer | name bar */}
         <div style={{
           display: "flex", flexWrap: "wrap", alignItems: "center", marginBottom: 24, gap: 10
         }}>
@@ -172,6 +202,13 @@ export default function ChallengesPage() {
           }}>
             Streak: <span style={{ fontWeight: 700, color: theme.success }}>{streak}</span>
           </span>
+          <span style={{
+            padding: "4px 18px", marginLeft: 8, background: theme.surface,
+            border: "1px solid #eee", borderRadius: 6,
+            color: theme.success, fontFamily: "monospace"
+          }}>
+            XP: <span style={{ fontWeight: 700 }}>{xp}</span>
+          </span>
           {/* timer */}
           <span style={{
             color: timerColor,
@@ -182,7 +219,7 @@ export default function ChallengesPage() {
             marginRight: 12,
             letterSpacing: 2
           }}>
-            {timerActive ? `⏰ ${formatTimer(timeLeft)}` :
+            {timerActive ? `\u23f0 ${formatTimer(timeLeft)}` :
               (timeLeft === 0 ? "Time's up!" : "")}
           </span>
           {/* Leaderboard username input */}
@@ -218,11 +255,33 @@ export default function ChallengesPage() {
             Reset Progress
           </button>
         </div>
+        {/* CATEGORY FILTER */}
+        <div style={{ margin: "12px 0 16px 0" }}>
+          <label style={{ fontWeight: 500, marginRight: 8 }}>Category:</label>
+          <select
+            value={categoryFilter}
+            onChange={(e) => {
+              setCategoryFilter(e.target.value);
+              setSelectedIdx(0);
+            }}
+            style={{
+              background: "#F9FAFB",
+              color: "#111827",
+              border: "1px solid #9CA3AF",
+              borderRadius: 5,
+              padding: "4px 7px",
+              fontSize: 15
+            }}>
+            {categoryOptions.map(cat => (
+              <option key={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
         <div style={{ display: "flex", gap: 36 }}>
           {/* Sidebar list + leaderboard */}
           <div style={{ flex: "0 0 220px" }}>
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {challengesData.map((challenge, i) => (
+              {filteredChallenges.map((challenge, i) => (
                 <li
                   key={challenge.id}
                   style={{
@@ -234,11 +293,25 @@ export default function ChallengesPage() {
                     cursor: "pointer",
                     padding: "9px 13px",
                     fontWeight: 600,
-                    transition: "all .14s"
+                    transition: "all .14s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between"
                   }}
                   onClick={() => handleSelectChallenge(i)}
                 >
-                  {challenge.title}
+                  <span>{challenge.title}</span>
+                  <span style={{
+                    color: theme.success,
+                    background: "#ECFDF5",
+                    borderRadius: 5,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    padding: "0px 8px",
+                    marginLeft: 7
+                  }}>
+                    {challenge.xp} XP
+                  </span>
                 </li>
               ))}
               {/* Leaderboard */}
@@ -276,6 +349,17 @@ export default function ChallengesPage() {
                           {entry.username}
                         </span>
                         <span style={{ marginLeft: 8 }}>{entry.score}</span>
+                        <span style={{
+                          marginLeft: 8,
+                          color: theme.success,
+                          fontSize: 13,
+                          border: "1px solid #ECFDF5",
+                          background: "#ECFDF5",
+                          borderRadius: 4,
+                          padding: "0px 5px"
+                        }}>
+                          XP: {entry.totalXP || 0}
+                        </span>
                       </li>
                     ))
                   )}
@@ -295,6 +379,33 @@ export default function ChallengesPage() {
             <h3 style={{ fontWeight: 800, color: theme.primary, fontSize: "1.18em", margin: "0 0 4px 0" }}>
               {selectedChallenge.title}
             </h3>
+            <span
+              style={{
+                color: theme.secondary,
+                background: "#E5E7EB",
+                borderRadius: 5,
+                fontWeight: 600,
+                fontSize: 13,
+                padding: "1px 8px",
+                marginRight: 7
+              }}
+              title="Challenge category"
+            >
+              {selectedChallenge.category}
+            </span>
+            <span
+              style={{
+                color: theme.success,
+                background: "#ECFDF5",
+                borderRadius: 5,
+                fontWeight: 600,
+                fontSize: 13,
+                padding: "1px 9px"
+              }}
+              title="XP for solving"
+            >
+              {selectedChallenge.xp} XP
+            </span>
             <p style={{ color: theme.text, marginBottom: 10 }}>{selectedChallenge.description}</p>
             <textarea
               value={userCode[selectedChallenge.id] ?? ""}
@@ -333,7 +444,7 @@ export default function ChallengesPage() {
               onClick={e => {
                 e.preventDefault();
                 if (!timerActive || timeLeft === 0 || isCorrect[selectedChallenge.id]) return;
-                // Quick evaluation logic (copy from runUserFunction in original)
+                // Evaluation logic
                 let details = { correct: false };
                 try {
                   // eslint-disable-next-line no-new-func
@@ -394,8 +505,7 @@ export default function ChallengesPage() {
                   marginTop: 8,
                   padding: "0.8em"
                 }}>
-                  {/* Show sample correct implementation, if desired */}
-                  {/* (Implementation not shown) */}
+                  {/* Solution can be shown here if desired */}
                 </pre>
               </div>
             )}
