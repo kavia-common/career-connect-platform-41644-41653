@@ -554,37 +554,8 @@ function TestsList({
                       }}
                     >
                       <div style={{ display: "grid", gap: 6 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 10,
-                            flexWrap: "wrap",
-                            alignItems: "center",
-                          }}
-                        >
-                          <div className="h3" style={{ margin: 0 }}>
-                            {t.title}
-                          </div>
-
-                          {t.category || t.skill ? (
-                            <span
-                              className="badge"
-                              style={getCategoryBadgeStyle(t.category || t.skill)}
-                              title={`Category: ${t.category || t.skill}`}
-                            >
-                              Category: {t.category || t.skill}
-                            </span>
-                          ) : null}
-
-                          {t.difficulty ? (
-                            <span
-                              className="badge"
-                              style={getDifficultyBadgeStyle(t.difficulty)}
-                              title={`Difficulty: ${t.difficulty}`}
-                            >
-                              Difficulty: {t.difficulty}
-                            </span>
-                          ) : null}
+                        <div className="h3" style={{ margin: 0 }}>
+                          {t.title}
                         </div>
 
                         <div
@@ -596,22 +567,6 @@ function TestsList({
                           <span>{t.duration}</span>
                           <span>•</span>
                           <span>Status: {status}</span>
-                          {progress?.status === "in_progress" ? (
-                            <>
-                              <span>•</span>
-                              <span>
-                                Progress: {answered}/{t.questions.length}
-                              </span>
-                            </>
-                          ) : null}
-                          {progress?.status === "completed" ? (
-                            <>
-                              <span>•</span>
-                              <span>
-                                Score: {progress.score}/{t.questions.length}
-                              </span>
-                            </>
-                          ) : null}
                         </div>
                       </div>
 
