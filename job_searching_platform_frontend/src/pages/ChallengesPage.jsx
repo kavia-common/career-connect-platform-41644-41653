@@ -170,57 +170,33 @@ export default function ChallengesPage() {
         <span style={badgeStyle}>XP: {xp}</span>
       </h1>
       <div style={{ margin: "1.2em 0 2em 0" }}>
-        <div style={{ display: "flex", gap: "20px", alignItems: "end", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label htmlFor="category-dropdown" className="muted" style={{ fontSize: 13, marginBottom: 6 }}>
-              Category
-            </label>
-            <select
-              id="category-dropdown"
-              value={activeCategory}
-              onChange={(e) => setActiveCategory(e.target.value)}
-              className="input"
-              style={{
-                minWidth: 190,
-                border: `1px solid ${theme.secondary}`,
-                borderRadius: 6,
-                padding: "0.4em 0.75em",
-                color: theme.text,
-                background: theme.surface,
-                fontSize: "1em",
-                fontWeight: 500,
-              }}
-            >
-              <option value="All">All</option>
-              {categoryList.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div className="muted" style={{ marginBottom: 6, fontSize: 13 }}>&nbsp;</div>
-            <button
-              type="button"
-              className="btn btn-ghost"
-              style={{
-                padding: "0.5em 1.4em",
-                background: "none",
-                color: (activeCategory === "All") ? theme.secondary : theme.primary,
-                border: `1px solid ${(activeCategory === "All") ? "#eee" : theme.secondary}`,
-                fontWeight: 600,
-                fontSize: "1em",
-                borderRadius: 6,
-                cursor: (activeCategory === "All") ? "not-allowed" : "pointer",
-                opacity: (activeCategory === "All") ? 0.7 : 1,
-              }}
-              onClick={() => setActiveCategory("All")}
-              disabled={activeCategory === "All"}
-              title="Reset category filter to All"
-            >
-              Reset
-            </button>
-          </div>
-        </div>
+        <strong>Category:</strong>
+        <button
+          style={{
+            ...badgeStyle,
+            background: activeCategory === "All" ? theme.success : theme.secondary,
+            marginLeft: "1em",
+            cursor: "pointer",
+          }}
+          onClick={() => setActiveCategory("All")}
+        >
+          All
+        </button>
+        {categoryList.map((cat) => (
+          <button
+            key={cat}
+            style={{
+              ...badgeStyle,
+              background: activeCategory === cat ? theme.success : theme.secondary,
+              color: activeCategory === cat ? theme.surface : theme.primary,
+              marginLeft: "0.55em",
+              cursor: "pointer",
+            }}
+            onClick={() => setActiveCategory(cat)}
+          >
+            {cat}
+          </button>
+        ))}
       </div>
       {filteredChallenges.length === 0 ? (
         <div>No coding challenges in this category yet.</div>
