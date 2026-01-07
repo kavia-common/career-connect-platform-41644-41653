@@ -1,21 +1,31 @@
 import React, { useRef, useState } from "react";
 
 /**
- * CodeRunner
- * Runs user-provided JavaScript code in a sandboxed Web Worker,
- * capturing stdout (console.log) and errors, and displaying them.
- * Shows a minimal guidance about the sandbox security.
+ * CodeRunner with support for onSubmitEvaluation and onShowSolution.
  * 
  * Props:
  *   code: string - the user code to execute
- *   disabled: boolean - if true, disables the Run button
+ *   challenge: object - coding challenge meta (optional)
+ *   disabled: boolean - disables the Run button and editing
+ *   onSubmitEvaluation: function({ correct }) - called with evaluation result after running code
+ *   onShowSolution: function() - called to show solution if incorrect
+ *   showSolution: boolean - if true, shows solution (needed for parent page)
  */
-const CodeRunner = ({ code = "", disabled = false }) => {
+const CodeRunner = ({ 
+  code = "",
+  challenge,
+  disabled = false,
+  onSubmitEvaluation,
+  onShowSolution,
+  showSolution
+}) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
+  const [lastCorrect, setLastCorrect] = useState(false);
+
   const workerRef = useRef(null);
 
-  // PUBLIC_INTERFACE
+  // This runner is used for feedback output, not for challenge judging (handled in parent)
   function runCode() {
     setOutput("");
     setIsRunning(true);
@@ -25,7 +35,6 @@ const CodeRunner = ({ code = "", disabled = false }) => {
       self.onmessage = function(e) {
         const code = e.data;
         let stdout = '';
-        // Patch console.log to capture output
         const originalLog = console.log;
         console.log = function(...args) {
           stdout += args.join(' ') + '\\n';
@@ -33,9 +42,7 @@ const CodeRunner = ({ code = "", disabled = false }) => {
         };
         try {
           let result;
-          // Prevent access to self, importScripts, window, etc.
-          (function(){ 
-            "use strict";
+          (function(){ "use strict";
             result = eval(code);
           }).call({});
           if (typeof result !== "undefined") {
