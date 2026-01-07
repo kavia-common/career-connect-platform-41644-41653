@@ -1,5 +1,11 @@
-import React, { useMemo, useState } from "react";
-import { applicationsData } from "../data/applicationsData";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  loadApplications,
+  saveApplications,
+  updateApplicationStatus,
+  upsertTimelineEvent,
+  resetApplications,
+} from "../utils/applicationsStorage";
 
 /**
  * Normalize a value to a search-friendly lowercase string.
@@ -35,34 +41,88 @@ function uniqStrings(values) {
   return out;
 }
 
+function isoToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatEventDate(value) {
+  const t = Date.parse(String(value || ""));
+  if (!Number.isFinite(t)) return String(value || "—");
+  return new Date(t).toLocaleDateString();
+}
+
+const COMMON_STATUS_OPTIONS = [
+  "Applied",
+  "Interview Scheduled",
+  "Interviewing",
+  "Offer",
+  "Rejected",
+  "Withdrawn",
+];
+
 /**
  * PUBLIC_INTERFACE
- * ApplicationsPage: local application tracking view backed by static applicationsData.
+ * ApplicationsPage: local application tracking view backed by static applicationsData
+ * with localStorage persistence for status + timeline.
+ *
  * Includes basic filters and sorting for status/date/company/title.
  */
 export default function ApplicationsPage() {
+  const [applications, setApplications] = useState(() => loadApplications());
+
+  // Persist any changes (best-effort).
+  useEffect(() => {
+    saveApplications(applications);
+  }, [applications]);
+
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date_desc");
 
+  // UI state: expand/collapse timeline per application
+  const [expandedById, setExpandedById] = useState({});
+
+  // UI state: status editing per application
+  const [editingStatusId, setEditingStatusId] = useState(null);
+  const [draftStatusById, setDraftStatusById] = useState({});
+
+  // UI state: add timeline event form per application
+  const [timelineDraftById, setTimelineDraftById] = useState({});
+
   const statusOptions = useMemo(() => {
-    const statuses = applicationsData.map((a) => a.status).filter(Boolean);
-    return uniqStrings(statuses).sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase())
+    const statuses = applications.map((a) => a.status).filter(Boolean);
+    const derived = uniqStrings(statuses);
+
+    // Keep the dropdown stable and useful by prioritizing common statuses first.
+    const normalizedCommon = COMMON_STATUS_OPTIONS.filter((s) =>
+      derived.some((d) => d.toLowerCase() === s.toLowerCase())
     );
-  }, []);
+
+    const rest = derived
+      .filter(
+        (s) =>
+          !COMMON_STATUS_OPTIONS.some((c) => c.toLowerCase() === s.toLowerCase())
+      )
+      .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+    const combined = uniqStrings([...normalizedCommon, ...rest]);
+    return combined;
+  }, [applications]);
 
   const filtered = useMemo(() => {
     const q = toSearchText(query).trim();
     const s = toSearchText(statusFilter);
 
-    return applicationsData.filter((app) => {
+    return applications.filter((app) => {
       if (q) {
         const haystack = [
           app.jobTitle,
           app.company,
           app.status,
           app.appliedDate,
+          ...(Array.isArray(app.timeline)
+            ? app.timeline.flatMap((e) => [e.type, e.note, e.date])
+            : []),
         ]
           .map(toSearchText)
           .join(" • ");
@@ -76,7 +136,7 @@ export default function ApplicationsPage() {
 
       return true;
     });
-  }, [query, statusFilter]);
+  }, [applications, query, statusFilter]);
 
   const sorted = useMemo(() => {
     const base = [...filtered];
@@ -168,6 +228,71 @@ export default function ApplicationsPage() {
     return base;
   };
 
+  function toggleExpanded(id) {
+    setExpandedById((prev) => ({ ...prev, [String(id)]: !prev[String(id)] }));
+  }
+
+  function beginEditStatus(app) {
+    setEditingStatusId(app.id);
+    setDraftStatusById((prev) => ({
+      ...prev,
+      [String(app.id)]: String(app.status || "").trim(),
+    }));
+  }
+
+  function cancelEditStatus() {
+    setEditingStatusId(null);
+  }
+
+  function saveStatus(appId) {
+    const nextStatus = String(draftStatusById[String(appId)] || "").trim();
+    if (!nextStatus) return;
+
+    setApplications((prev) =>
+      updateApplicationStatus(prev, appId, nextStatus, { date: isoToday() })
+    );
+    setEditingStatusId(null);
+    // If timeline panel isn't expanded, still give users a hint by expanding after status change.
+    setExpandedById((prev) => ({ ...prev, [String(appId)]: true }));
+  }
+
+  function setTimelineDraft(appId, patch) {
+    setTimelineDraftById((prev) => ({
+      ...prev,
+      [String(appId)]: { ...(prev[String(appId)] || {}), ...patch },
+    }));
+  }
+
+  function addTimelineEvent(appId) {
+    const draft = timelineDraftById[String(appId)] || {};
+    const type = String(draft.type || "").trim();
+    const note = String(draft.note || "").trim();
+    const date = String(draft.date || "").trim() || isoToday();
+
+    if (!type) return;
+
+    setApplications((prev) =>
+      upsertTimelineEvent(prev, appId, { type, note, date })
+    );
+
+    // Clear per-app draft (keep date convenience as "today").
+    setTimelineDraftById((prev) => ({
+      ...prev,
+      [String(appId)]: { date: isoToday(), type: "", note: "" },
+    }));
+
+    setExpandedById((prev) => ({ ...prev, [String(appId)]: true }));
+  }
+
+  function resetLocalEdits() {
+    resetApplications();
+    setApplications(loadApplications());
+    setEditingStatusId(null);
+    setDraftStatusById({});
+    setTimelineDraftById({});
+    setExpandedById({});
+  }
+
   return (
     <div className="container">
       <div className="card">
@@ -177,7 +302,8 @@ export default function ApplicationsPage() {
             <div className="muted">
               Track your applications by <strong>company</strong>,{" "}
               <strong>job title</strong>, <strong>applied date</strong>, and{" "}
-              <strong>status</strong>.
+              <strong>status</strong>. You can also add{" "}
+              <strong>timeline events</strong> per application.
             </div>
           </div>
 
@@ -200,7 +326,7 @@ export default function ApplicationsPage() {
                     id="apps-q"
                     className="input"
                     type="text"
-                    placeholder="Search by title, company, status…"
+                    placeholder="Search by title, company, status, timeline…"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
@@ -255,7 +381,7 @@ export default function ApplicationsPage() {
               >
                 <div className="muted" style={{ fontSize: 13 }}>
                   Showing <strong>{sorted.length}</strong> of{" "}
-                  <strong>{applicationsData.length}</strong>
+                  <strong>{applications.length}</strong>
                   {activeFilterCount ? (
                     <>
                       {" "}
@@ -265,14 +391,24 @@ export default function ApplicationsPage() {
                   .
                 </div>
 
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={clearFilters}
-                  disabled={!activeFilterCount}
-                >
-                  Clear filters
-                </button>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={clearFilters}
+                    disabled={!activeFilterCount}
+                  >
+                    Clear filters
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={resetLocalEdits}
+                    title="Clears locally saved edits and returns to the static seed data"
+                  >
+                    Reset local edits
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -289,35 +425,324 @@ export default function ApplicationsPage() {
             </div>
           ) : (
             <div style={{ display: "grid", gap: 10 }}>
-              {sorted.map((app) => (
-                <div className="card" key={app.id}>
-                  <div className="card-body" style={{ display: "grid", gap: 10 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        flexWrap: "wrap",
-                        alignItems: "baseline",
-                      }}
-                    >
-                      <div style={{ display: "grid", gap: 4 }}>
-                        <div className="h2">{app.jobTitle}</div>
-                        <div className="muted">
-                          {app.company}
-                          {app.appliedDate ? ` • Applied ${app.appliedDate}` : ""}
+              {sorted.map((app) => {
+                const isExpanded = Boolean(expandedById[String(app.id)]);
+                const isEditingStatus = editingStatusId === app.id;
+
+                const timeline = Array.isArray(app.timeline) ? app.timeline : [];
+                const timelineDraft = timelineDraftById[String(app.id)] || {
+                  date: isoToday(),
+                  type: "",
+                  note: "",
+                };
+
+                return (
+                  <div className="card" key={app.id}>
+                    <div className="card-body" style={{ display: "grid", gap: 12 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          flexWrap: "wrap",
+                          alignItems: "baseline",
+                        }}
+                      >
+                        <div style={{ display: "grid", gap: 4, minWidth: 260 }}>
+                          <div className="h2">{app.jobTitle}</div>
+                          <div className="muted">
+                            {app.company}
+                            {app.appliedDate ? ` • Applied ${app.appliedDate}` : ""}
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 10,
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                            justifyContent: "flex-end",
+                          }}
+                        >
+                          {!isEditingStatus ? (
+                            <>
+                              <span style={statusBadgeStyle(app.status)}>
+                                {app.status}
+                              </span>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => beginEditStatus(app)}
+                              >
+                                Edit status
+                              </button>
+                            </>
+                          ) : (
+                            <div
+                              className="card"
+                              style={{
+                                borderRadius: 10,
+                                padding: 10,
+                                background: "rgba(55, 65, 81, 0.03)",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "1fr",
+                                  gap: 8,
+                                  minWidth: 260,
+                                }}
+                              >
+                                <label
+                                  className="muted"
+                                  htmlFor={`status-edit-${app.id}`}
+                                  style={{ fontSize: 13, fontWeight: 700 }}
+                                >
+                                  Update status
+                                </label>
+                                <div style={{ display: "flex", gap: 8 }}>
+                                  <select
+                                    id={`status-edit-${app.id}`}
+                                    className="select"
+                                    value={draftStatusById[String(app.id)] ?? app.status}
+                                    onChange={(e) =>
+                                      setDraftStatusById((prev) => ({
+                                        ...prev,
+                                        [String(app.id)]: e.target.value,
+                                      }))
+                                    }
+                                  >
+                                    {uniqStrings([
+                                      ...COMMON_STATUS_OPTIONS,
+                                      ...(statusOptions || []),
+                                    ]).map((s) => (
+                                      <option key={s} value={s}>
+                                        {s}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={() => saveStatus(app.id)}
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={cancelEditStatus}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                                <div className="muted" style={{ fontSize: 12 }}>
+                                  Saving a status change automatically adds a timeline event.
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <span style={statusBadgeStyle(app.status)}>
-                        {app.status}
-                      </span>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <div className="muted" style={{ fontSize: 13 }}>
+                          Timeline events: <strong>{timeline.length}</strong>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => toggleExpanded(app.id)}
+                        >
+                          {isExpanded ? "Hide timeline" : "View timeline"}
+                        </button>
+                      </div>
+
+                      {isExpanded ? (
+                        <div style={{ display: "grid", gap: 12 }}>
+                          {/* Add new event */}
+                          <div
+                            className="card"
+                            style={{
+                              borderRadius: 10,
+                              borderStyle: "dashed",
+                              background: "rgba(55, 65, 81, 0.02)",
+                            }}
+                          >
+                            <div className="card-body" style={{ padding: 12 }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "baseline",
+                                  gap: 10,
+                                  flexWrap: "wrap",
+                                  marginBottom: 10,
+                                }}
+                              >
+                                <div style={{ fontWeight: 900 }}>Add timeline event</div>
+                                <div className="muted" style={{ fontSize: 12 }}>
+                                  Example: Interview Scheduled, Follow-up, Rejected…
+                                </div>
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "140px 1fr",
+                                  gap: 10,
+                                }}
+                              >
+                                <div style={{ display: "grid", gap: 6 }}>
+                                  <label
+                                    className="muted"
+                                    htmlFor={`evt-date-${app.id}`}
+                                    style={{ fontSize: 13 }}
+                                  >
+                                    Date
+                                  </label>
+                                  <input
+                                    id={`evt-date-${app.id}`}
+                                    className="input"
+                                    type="date"
+                                    value={timelineDraft.date || isoToday()}
+                                    onChange={(e) =>
+                                      setTimelineDraft(app.id, { date: e.target.value })
+                                    }
+                                  />
+                                </div>
+
+                                <div style={{ display: "grid", gap: 6 }}>
+                                  <label
+                                    className="muted"
+                                    htmlFor={`evt-type-${app.id}`}
+                                    style={{ fontSize: 13 }}
+                                  >
+                                    Type
+                                  </label>
+                                  <input
+                                    id={`evt-type-${app.id}`}
+                                    className="input"
+                                    value={timelineDraft.type || ""}
+                                    onChange={(e) =>
+                                      setTimelineDraft(app.id, { type: e.target.value })
+                                    }
+                                    placeholder="e.g., Interview Scheduled"
+                                  />
+                                </div>
+
+                                <div style={{ gridColumn: "1 / -1", display: "grid", gap: 6 }}>
+                                  <label
+                                    className="muted"
+                                    htmlFor={`evt-note-${app.id}`}
+                                    style={{ fontSize: 13 }}
+                                  >
+                                    Note (optional)
+                                  </label>
+                                  <textarea
+                                    id={`evt-note-${app.id}`}
+                                    className="textarea"
+                                    rows={2}
+                                    value={timelineDraft.note || ""}
+                                    onChange={(e) =>
+                                      setTimelineDraft(app.id, { note: e.target.value })
+                                    }
+                                    placeholder="Add details (contact, time, links, next steps)…"
+                                  />
+                                </div>
+
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                  <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={() => addTimelineEvent(app.id)}
+                                    disabled={!String(timelineDraft.type || "").trim()}
+                                  >
+                                    Add event
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Timeline list */}
+                          {timeline.length === 0 ? (
+                            <div className="muted" style={{ fontSize: 13 }}>
+                              No timeline events yet.
+                            </div>
+                          ) : (
+                            <div style={{ display: "grid", gap: 8 }}>
+                              {timeline.map((evt) => (
+                                <div
+                                  key={evt.id}
+                                  className="card"
+                                  style={{
+                                    borderRadius: 10,
+                                    border: "1px solid rgba(0,0,0,0.06)",
+                                  }}
+                                >
+                                  <div
+                                    className="card-body"
+                                    style={{
+                                      padding: 12,
+                                      display: "grid",
+                                      gap: 6,
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        gap: 10,
+                                        flexWrap: "wrap",
+                                        alignItems: "baseline",
+                                      }}
+                                    >
+                                      <div style={{ fontWeight: 900 }}>{evt.type}</div>
+                                      <div className="muted" style={{ fontSize: 13 }}>
+                                        {formatEventDate(evt.date)}
+                                      </div>
+                                    </div>
+                                    {evt.note ? (
+                                      <div style={{ lineHeight: 1.45 }}>{evt.note}</div>
+                                    ) : (
+                                      <div className="muted" style={{ fontSize: 13 }}>
+                                        No notes.
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+
+          <style>
+            {`
+              @media (max-width: 900px) {
+                .container [data-apps-controls-grid] {
+                  grid-template-columns: 1fr;
+                }
+              }
+            `}
+          </style>
         </div>
       </div>
     </div>
