@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { register as registerApi } from "../services/authApi";
 import { useAuth } from "../state/authStore";
 import { isValidEmail, validatePassword } from "../utils/validators";
 
 /**
  * PUBLIC_INTERFACE
- * RegisterPage for Talenvia.
+ * RegisterPage for Talenvia (Supabase Auth).
  */
 export default function RegisterPage() {
   const auth = useAuth();
@@ -35,10 +34,10 @@ export default function RegisterPage() {
 
   // If already authenticated, keep users out of public auth pages.
   useEffect(() => {
-    if (auth.status === "authenticated" && auth.accessToken) {
+    if (auth.status === "authenticated" && auth.session && auth.user) {
       navigate("/dashboard", { replace: true });
     }
-  }, [auth.status, auth.accessToken, navigate]);
+  }, [auth.status, auth.session, auth.user, navigate]);
 
   const validate = () => {
     const errors = {
@@ -77,23 +76,22 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      const res = await registerApi({
+      const data = await auth.register({
         email: email.trim(),
         password,
         fullName: fullName.trim(),
       });
 
-      // If backend returns token + user (per docs/api.md), we can optionally auto-login.
-      if (res?.accessToken && res?.user) {
-        auth.setAuth(res.accessToken, res.user);
-        navigate("/dashboard", { replace: true });
+      // If email confirmation is enabled, Supabase returns no session until confirmed.
+      // In that case we keep the existing UX: redirect to login with a success banner.
+      if (!data?.session) {
+        navigate("/login?registered=1", { replace: true });
         return;
       }
 
-      // Otherwise: redirect to login with a success notice.
-      navigate("/login?registered=1", { replace: true });
+      // Session exists: user is signed in.
+      navigate("/dashboard", { replace: true });
     } catch (err) {
-      // err shape normalized by httpClient: { code, message, details, status }
       const message =
         err?.code === "VALIDATION_ERROR"
           ? err?.message || "Please check your details and try again."
@@ -131,7 +129,10 @@ export default function RegisterPage() {
                 marginBottom: 12,
               }}
             >
-              <div className="card-body" style={{ color: "var(--color-success)" }}>
+              <div
+                className="card-body"
+                style={{ color: "var(--color-success)" }}
+              >
                 Account created. You can sign in now.
               </div>
             </div>
@@ -219,7 +220,10 @@ export default function RegisterPage() {
                   marginBottom: 12,
                 }}
               >
-                <div className="card-body" style={{ color: "var(--color-danger)" }}>
+                <div
+                  className="card-body"
+                  style={{ color: "var(--color-danger)" }}
+                >
                   {submitError}
                 </div>
               </div>

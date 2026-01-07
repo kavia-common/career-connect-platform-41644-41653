@@ -61,29 +61,22 @@ function normalizeError(res, bodyText) {
 }
 
 /**
- * Minimal localStorage token getter used by the interceptor.
- * Note: We intentionally keep this independent from React state so
- * the HTTP layer can attach tokens in any context (queries, effects).
+ * The app's authentication is handled by Supabase Auth, not by a custom JWT stored
+ * as "talenvia.accessToken".
+ *
+ * For now, backend API calls remain unauthenticated (placeholders) until a backend
+ * is integrated with Supabase JWT verification or another strategy.
+ *
+ * If/when the backend expects Supabase access tokens, update this to:
+ * - read the current session from supabase.auth.getSession()
+ * - attach Authorization: Bearer <session.access_token>
  */
 function getAccessToken() {
-  try {
-    return window.localStorage.getItem("talenvia.accessToken") || "";
-  } catch {
-    return "";
-  }
+  return "";
 }
 
-/**
- * If we receive a 401, clear auth storage to force re-login.
- * We avoid navigating here to prevent coupling to router.
- */
 function handleUnauthorized() {
-  try {
-    window.localStorage.removeItem("talenvia.accessToken");
-    window.localStorage.removeItem("talenvia.user");
-  } catch {
-    // ignore
-  }
+  // No-op for now (Supabase handles session state separately).
 }
 
 /**

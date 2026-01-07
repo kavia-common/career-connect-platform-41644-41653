@@ -7,7 +7,11 @@ import { useAuth } from "../state/authStore";
  */
 export default function DashboardPage() {
   const auth = useAuth();
-  const name = auth.user?.fullName || auth.user?.email || "there";
+  const name =
+    auth.user?.user_metadata?.fullName ||
+    auth.user?.user_metadata?.name ||
+    auth.user?.email ||
+    "there";
 
   return (
     <div className="container">

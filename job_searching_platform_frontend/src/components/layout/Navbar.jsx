@@ -47,7 +47,7 @@ export default function Navbar() {
           Theme: {theme}
         </button>
 
-        {auth.status === "authenticated" ? (
+        {auth.status === "authenticated" && auth.session && auth.user ? (
           <button className="btn btn-primary" onClick={onLogout}>
             Logout
           </button>

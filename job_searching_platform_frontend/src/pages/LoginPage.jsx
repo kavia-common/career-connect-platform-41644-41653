@@ -1,12 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { API_BASE } from "../services/config";
 import { useAuth } from "../state/authStore";
 import { isValidEmail, validatePassword } from "../utils/validators";
 
 /**
  * PUBLIC_INTERFACE
- * LoginPage for Talenvia.
+ * LoginPage for Talenvia (Supabase Auth).
  */
 export default function LoginPage() {
   const auth = useAuth();
@@ -52,7 +51,6 @@ export default function LoginPage() {
       await auth.login({ email: email.trim(), password });
       navigate(returnTo, { replace: true });
     } catch (err) {
-      // err shape normalized by httpClient: { code, message, details, status }
       const message =
         err?.code === "UNAUTHORIZED"
           ? "Invalid email or password."
@@ -77,9 +75,6 @@ export default function LoginPage() {
             <div className="muted">
               Sign in to continue to your Talenvia dashboard.
             </div>
-            <div className="muted" style={{ fontSize: 12 }}>
-              API base: <code>{API_BASE || "(REACT_APP_API_BASE not set)"}</code>
-            </div>
           </div>
 
           {registered ? (
@@ -91,7 +86,10 @@ export default function LoginPage() {
                 marginBottom: 12,
               }}
             >
-              <div className="card-body" style={{ color: "var(--color-success)" }}>
+              <div
+                className="card-body"
+                style={{ color: "var(--color-success)" }}
+              >
                 Account created. You can sign in now.
               </div>
             </div>
@@ -143,7 +141,10 @@ export default function LoginPage() {
                   marginBottom: 12,
                 }}
               >
-                <div className="card-body" style={{ color: "var(--color-danger)" }}>
+                <div
+                  className="card-body"
+                  style={{ color: "var(--color-danger)" }}
+                >
                   {submitError}
                 </div>
               </div>

@@ -1,100 +1,179 @@
-import React, { createContext, useCallback, useContext, useMemo, useReducer } from "react";
-import { login as loginApi } from "../services/authApi";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { supabase } from "../services/supabaseClient";
 
-const STORAGE_TOKEN_KEY = "talenvia.accessToken";
-const STORAGE_USER_KEY = "talenvia.user";
+/**
+ * NOTE:
+ * We intentionally remove the old localStorage "talenvia.accessToken" logic.
+ * Supabase Auth persists its session internally (localStorage) and provides
+ * access to the session via getSession / onAuthStateChange.
+ */
 
 const AuthContext = createContext(null);
 
-function safeJsonParse(value) {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-}
+/**
+ * Map Supabase auth errors into a stable UI-consumable shape similar to the previous
+ * httpClient normalization, so existing UI error handling remains simple.
+ * @param {any} err
+ */
+function normalizeSupabaseAuthError(err) {
+  const message = err?.message || "Authentication failed. Please try again.";
+  const status = err?.status;
 
-function readInitialState() {
-  let token = "";
-  let user = null;
+  // Provide a small set of stable-ish codes for UI branching.
+  const code =
+    status === 400 || status === 401
+      ? "UNAUTHORIZED"
+      : err?.code || "AUTH_ERROR";
 
-  try {
-    token = window.localStorage.getItem(STORAGE_TOKEN_KEY) || "";
-    user = safeJsonParse(window.localStorage.getItem(STORAGE_USER_KEY) || "");
-  } catch {
-    // ignore storage errors
-  }
-
-  return {
-    status: token ? "authenticated" : "anonymous",
-    accessToken: token,
-    user,
-  };
-}
-
-function reducer(state, action) {
-  switch (action.type) {
-    case "AUTH_START":
-      return { ...state, status: "authenticating" };
-    case "AUTH_SUCCESS":
-      return {
-        status: "authenticated",
-        accessToken: action.payload.accessToken,
-        user: action.payload.user,
-      };
-    case "AUTH_LOGOUT":
-      return { status: "anonymous", accessToken: "", user: null };
-    default:
-      return state;
-  }
+  return { code, message, status };
 }
 
 /**
  * PUBLIC_INTERFACE
- * AuthProvider for Talenvia.
+ * AuthProvider powered by Supabase Auth.
+ *
+ * Exposes:
+ * - status: "authenticating" | "authenticated" | "anonymous"
+ * - loading: boolean (alias for initial hydration / auth transitions)
+ * - session: Supabase session or null
+ * - user: Supabase user or null
+ * - login({email,password})
+ * - register({email,password,fullName})
+ * - logout()
  */
 export function AuthProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, undefined, readInitialState);
+  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
 
-  const setAuth = useCallback((accessToken, user) => {
-    try {
-      window.localStorage.setItem(STORAGE_TOKEN_KEY, accessToken);
-      window.localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
-    } catch {
-      // ignore
+  // Hydrate session on mount and subscribe to changes.
+  useEffect(() => {
+    let isMounted = true;
+
+    async function hydrate() {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        if (!isMounted) return;
+        setSession(data?.session || null);
+        setUser(data?.session?.user || null);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn("[Auth] Failed to hydrate Supabase session:", e);
+        if (!isMounted) return;
+        setSession(null);
+        setUser(null);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     }
-    dispatch({ type: "AUTH_SUCCESS", payload: { accessToken, user } });
+
+    hydrate();
+
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user || null);
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      subscription?.subscription?.unsubscribe?.();
+    };
   }, []);
 
-  const logout = useCallback(() => {
+  const login = useCallback(async ({ email, password }) => {
+    setLoading(true);
     try {
-      window.localStorage.removeItem(STORAGE_TOKEN_KEY);
-      window.localStorage.removeItem(STORAGE_USER_KEY);
-    } catch {
-      // ignore
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+
+      // onAuthStateChange will also update state; we set it eagerly for snappy UX.
+      setSession(data?.session || null);
+      setUser(data?.session?.user || null);
+
+      return data;
+    } catch (e) {
+      throw normalizeSupabaseAuthError(e);
+    } finally {
+      setLoading(false);
     }
-    dispatch({ type: "AUTH_LOGOUT" });
   }, []);
 
-  const login = useCallback(
-    async ({ email, password }) => {
-      dispatch({ type: "AUTH_START" });
-      const res = await loginApi({ email, password });
-      // Expected shape: { user, accessToken, refreshToken? }
-      setAuth(res.accessToken, res.user);
-      return res;
-    },
-    [setAuth]
-  );
+  const register = useCallback(async ({ email, password, fullName }) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          // Store display name in metadata (no DB table changes required for this task).
+          data: { fullName: fullName || "" },
+        },
+      });
+      if (error) throw error;
+
+      // If email confirmations are enabled, session may be null until confirmed.
+      setSession(data?.session || null);
+      setUser(data?.session?.user || data?.user || null);
+
+      return data;
+    } catch (e) {
+      throw normalizeSupabaseAuthError(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setSession(null);
+      setUser(null);
+    } catch (e) {
+      // Even if signOut fails, clear local state so UI doesn't get stuck.
+      setSession(null);
+      setUser(null);
+      // eslint-disable-next-line no-console
+      console.warn("[Auth] signOut failed:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const status = useMemo(() => {
+    if (loading) return "authenticating";
+    if (session?.user) return "authenticated";
+    return "anonymous";
+  }, [loading, session]);
 
   const value = useMemo(
     () => ({
-      ...state,
+      status,
+      loading,
+      session,
+      user,
       login,
+      register,
       logout,
-      setAuth,
     }),
-    [state, login, logout, setAuth]
+    [status, loading, session, user, login, register, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

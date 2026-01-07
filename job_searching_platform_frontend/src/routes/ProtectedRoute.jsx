@@ -5,6 +5,7 @@ import { useAuth } from "../state/authStore";
 /**
  * PUBLIC_INTERFACE
  * ProtectedRoute enforces authenticated access to nested routes.
+ * Uses Supabase session state (not localStorage tokens).
  */
 export default function ProtectedRoute({ children }) {
   const auth = useAuth();
@@ -20,7 +21,7 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  if (auth.status !== "authenticated" || !auth.accessToken) {
+  if (auth.status !== "authenticated" || !auth.session || !auth.user) {
     const returnTo = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
   }

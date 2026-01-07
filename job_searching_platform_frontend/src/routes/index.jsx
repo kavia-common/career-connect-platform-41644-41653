@@ -25,7 +25,7 @@ import MentorPage from "../pages/MentorPage";
  */
 function PublicOnlyRoute({ children }) {
   const auth = useAuth();
-  if (auth.status === "authenticated" && auth.accessToken) {
+  if (auth.status === "authenticated" && auth.session && auth.user) {
     return <Navigate to="/dashboard" replace />;
   }
   return children;
