@@ -835,7 +835,14 @@ function ResultsView({ test, progress, onRetake }) {
   return (
     <div className="card">
       <div className="card-body" style={{ display: "grid", gap: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
           <div style={{ display: "grid", gap: 6 }}>
             <div className="h2" style={{ margin: 0 }}>
               Results
@@ -862,7 +869,11 @@ function ResultsView({ test, progress, onRetake }) {
             const chosenText =
               typeof chosen === "number" ? q.options[chosen] : "No answer";
             const correctText = q.options[q.correctAnswer];
-            const isCorrect = typeof chosen === "number" && chosen === q.correctAnswer;
+            const isCorrect =
+              typeof chosen === "number" && chosen === q.correctAnswer;
+
+            const explanation =
+              typeof q.explanation === "string" ? q.explanation.trim() : "";
 
             return (
               <div
@@ -870,7 +881,9 @@ function ResultsView({ test, progress, onRetake }) {
                 className="card"
                 style={{
                   border: "1px solid rgba(0,0,0,0.06)",
-                  background: isCorrect ? "rgba(5, 150, 105, 0.06)" : "rgba(220, 38, 38, 0.04)",
+                  background: isCorrect
+                    ? "rgba(5, 150, 105, 0.06)"
+                    : "rgba(220, 38, 38, 0.04)",
                 }}
               >
                 <div className="card-body" style={{ display: "grid", gap: 8 }}>
@@ -887,6 +900,23 @@ function ResultsView({ test, progress, onRetake }) {
                     <div>
                       Correct answer: <strong>{correctText}</strong>
                     </div>
+
+                    {explanation ? (
+                      <div
+                        style={{
+                          marginTop: 6,
+                          padding: "10px 12px",
+                          borderRadius: 10,
+                          border: "1px solid rgba(0,0,0,0.06)",
+                          background: "rgba(55, 65, 81, 0.04)",
+                        }}
+                      >
+                        <div className="muted" style={{ fontSize: 13, marginBottom: 6 }}>
+                          Explanation
+                        </div>
+                        <div style={{ lineHeight: 1.45 }}>{explanation}</div>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -896,7 +926,9 @@ function ResultsView({ test, progress, onRetake }) {
 
         <div className="muted" style={{ fontSize: 13 }}>
           Completed at:{" "}
-          {progress?.submittedAt ? new Date(progress.submittedAt).toLocaleString() : "—"}
+          {progress?.submittedAt
+            ? new Date(progress.submittedAt).toLocaleString()
+            : "—"}
         </div>
       </div>
     </div>
