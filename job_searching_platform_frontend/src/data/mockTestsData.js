@@ -17,7 +17,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 1,
-    title: "Fundamentals",
+    title: "React Test",
     category: "React",
     difficulty: "Easy",
     skill: "React",
@@ -138,7 +138,7 @@ export const mockTests = [
   },
   {
     id: 2,
-    title: "State & Effects",
+    title: "React Test",
     category: "React",
     difficulty: "Medium",
     skill: "React",
@@ -283,7 +283,7 @@ export const mockTests = [
   },
   {
     id: 9,
-    title: "Performance & Rendering",
+    title: "React Test",
     category: "React",
     difficulty: "Hard",
     skill: "React",
@@ -402,12 +402,7 @@ export const mockTests = [
       {
         id: 10,
         question: "Which tool helps you find unnecessary renders in development?",
-        options: [
-          "React Router",
-          "React DevTools Profiler",
-          "Babel",
-          "ESLint only",
-        ],
+        options: ["React Router", "React DevTools Profiler", "Babel", "ESLint only"],
         correctAnswer: 1,
         explanation:
           "React DevTools Profiler lets you record commits and see which components rendered and why, helping diagnose performance issues.",
@@ -420,7 +415,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 3,
-    title: "Essentials",
+    title: "JavaScript Test",
     category: "JavaScript",
     difficulty: "Easy",
     skill: "JavaScript",
@@ -511,12 +506,7 @@ export const mockTests = [
       {
         id: 8,
         question: "What is the scope of a variable declared with let?",
-        options: [
-          "Function scope only",
-          "Block scope",
-          "Global scope only",
-          "Module scope only",
-        ],
+        options: ["Function scope only", "Block scope", "Global scope only", "Module scope only"],
         correctAnswer: 1,
         explanation:
           "let is block-scoped, meaning it exists only within the nearest enclosing { } block.",
@@ -546,7 +536,7 @@ export const mockTests = [
   },
   {
     id: 4,
-    title: "Modern JavaScript (ES6+)",
+    title: "JavaScript Test",
     category: "JavaScript",
     difficulty: "Medium",
     skill: "JavaScript",
@@ -687,7 +677,7 @@ export const mockTests = [
   },
   {
     id: 10,
-    title: "Async Patterns",
+    title: "JavaScript Test",
     category: "JavaScript",
     difficulty: "Hard",
     skill: "JavaScript",
@@ -827,7 +817,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 5,
-    title: "Fundamentals",
+    title: "HTML/CSS Test",
     category: "HTML/CSS",
     difficulty: "Easy",
     skill: "HTML/CSS",
@@ -938,7 +928,7 @@ export const mockTests = [
   },
   {
     id: 6,
-    title: "Responsive Layouts",
+    title: "HTML/CSS Test",
     category: "HTML/CSS",
     difficulty: "Medium",
     skill: "HTML/CSS",
@@ -1073,7 +1063,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 7,
-    title: "Basics",
+    title: "Node.js Test",
     category: "Node.js",
     difficulty: "Easy",
     skill: "Node.js",
@@ -1189,7 +1179,7 @@ export const mockTests = [
   },
   {
     id: 8,
-    title: "APIs & HTTP",
+    title: "Node.js Test",
     category: "Node.js",
     difficulty: "Hard",
     skill: "Node.js",
@@ -1309,7 +1299,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 11,
-    title: "Basics",
+    title: "Java Test",
     category: "Java",
     difficulty: "Easy",
     skill: "Java",
@@ -1415,7 +1405,7 @@ export const mockTests = [
   },
   {
     id: 12,
-    title: "OOP & Collections",
+    title: "Java Test",
     category: "Java",
     difficulty: "Medium",
     skill: "Java",
@@ -1525,7 +1515,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 13,
-    title: "Fundamentals",
+    title: "Python Test",
     category: "Python",
     difficulty: "Easy",
     skill: "Python",
@@ -1636,7 +1626,7 @@ export const mockTests = [
   },
   {
     id: 14,
-    title: "Data Structures & Comprehensions",
+    title: "Python Test",
     category: "Python",
     difficulty: "Medium",
     skill: "Python",
@@ -1675,12 +1665,7 @@ export const mockTests = [
       {
         id: 4,
         question: "What does enumerate(iterable) provide?",
-        options: [
-          "Only the values",
-          "Only the indices",
-          "Pairs of (index, value)",
-          "Pairs of (key, value)",
-        ],
+        options: ["Only the values", "Only the indices", "Pairs of (index, value)", "Pairs of (key, value)"],
         correctAnswer: 2,
         explanation:
           "enumerate yields (index, value) pairs, commonly used when you need both position and element.",
@@ -1771,7 +1756,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 15,
-    title: "Basics",
+    title: "Machine Learning Test",
     category: "Machine Learning",
     difficulty: "Easy",
     skill: "Machine Learning",
@@ -1820,7 +1805,12 @@ export const mockTests = [
       {
         id: 4,
         question: "Which technique helps reduce overfitting?",
-        options: ["Regularization", "Increasing training epochs indefinitely", "Removing validation set", "Using a larger learning rate always"],
+        options: [
+          "Regularization",
+          "Increasing training epochs indefinitely",
+          "Removing validation set",
+          "Using a larger learning rate always",
+        ],
         correctAnswer: 0,
         explanation:
           "Regularization adds penalties/constraints (like L1/L2) to discourage overly complex models and improve generalization.",
@@ -1902,7 +1892,7 @@ export const mockTests = [
   },
   {
     id: 16,
-    title: "Evaluation & Metrics",
+    title: "Machine Learning Test",
     category: "Machine Learning",
     difficulty: "Medium",
     skill: "Machine Learning",

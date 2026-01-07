@@ -530,13 +530,12 @@ function TestsList({
             : tests.map((t) => {
                 const progress = progressByTestId[String(t.id)];
                 const status = formatStatus(progress);
-                const answered = progress ? countAnswered(t, progress) : 0;
-                const isCompleted = progress?.status === "completed";
-                const primaryCta = isCompleted
-                  ? "Review results"
-                  : progress
-                    ? "Resume"
-                    : "Start";
+                const primaryCta =
+                  progress?.status === "completed"
+                    ? "Review results"
+                    : progress
+                      ? "Resume"
+                      : "Start";
 
                 return (
                   <div
