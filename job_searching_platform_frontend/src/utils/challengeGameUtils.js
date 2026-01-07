@@ -1,9 +1,10 @@
-// Utility file for challenge scoring, streak, XP, timer, leaderboard, localStorage persistence, and new category filter.
+//
+// Utility file for challenge scoring, streak, timer, and leaderboard with localStorage persistence.
+//
 
 const SCORE_KEY = 'challenge_score';
 const STREAK_KEY = 'challenge_streak';
 const LEADERBOARD_KEY = 'challenge_leaderboard';
-const XP_KEY = 'challenge_xp';
 
 const CHALLENGE_TIME_LIMIT = 180; // 3 minutes per challenge, in seconds
 
@@ -54,9 +55,9 @@ export function resetStreak() {
 }
 
 // PUBLIC_INTERFACE
-export function addToLeaderboard(username, score, totalXP) {
+export function addToLeaderboard(username, score) {
     /**
-     * Adds or updates the user's score (and XP) in the leaderboard.
+     * Adds or updates the user's score in the leaderboard.
      * Only keeps top 5 scores, persists in localStorage.
      */
     const current = getLeaderboard();
@@ -65,22 +66,12 @@ export function addToLeaderboard(username, score, totalXP) {
     let updated = current.map(entry => {
         if (entry.username === username) {
             found = true;
-            return {
-                ...entry,
-                score: Math.max(entry.score, score),
-                totalXP: typeof totalXP === "number" ? totalXP : (entry.totalXP || 0),
-                time: now
-            };
+            return { ...entry, score: Math.max(entry.score, score), time: now };
         }
         return entry;
     });
     if (!found) {
-        updated.push({
-          username,
-          score,
-          totalXP: typeof totalXP === "number" ? totalXP : 0,
-          time: now
-        });
+        updated.push({ username, score, time: now });
     }
     // Sort descending by score, then ascending by earliest time
     updated.sort((a, b) => b.score !== a.score ? (b.score - a.score) : (a.time - b.time));
@@ -94,7 +85,7 @@ export function addToLeaderboard(username, score, totalXP) {
 export function getLeaderboard() {
     /**
      * Retrieves the leaderboard from localStorage.
-     * Returns an array [{ username, score, time, totalXP }]
+     * Returns an array [{ username, score, time }]
      */
     let lb = [];
     try {
@@ -116,64 +107,4 @@ export function resetLeaderboard() {
 export function getInitialTimer() {
     /** Returns the time limit in seconds for a challenge. */
     return CHALLENGE_TIME_LIMIT;
-}
-
-// PUBLIC_INTERFACE
-export function getXP() {
-    /** Gets user's total XP from localStorage. */
-    return parseInt(localStorage.getItem(XP_KEY), 10) || 0;
-}
-
-// PUBLIC_INTERFACE
-export function setXP(newXP) {
-    /** Sets user's total XP in localStorage */
-    localStorage.setItem(XP_KEY, newXP);
-}
-
-// PUBLIC_INTERFACE
-export function addXP(amount) {
-    /** Increment user's XP by amount, persists locally. */
-    const current = getXP();
-    setXP(current + amount);
-    return current + amount;
-}
-
-// PUBLIC_INTERFACE
-export function resetXP() {
-    localStorage.setItem(XP_KEY, 0);
-}
-
-// PUBLIC_INTERFACE
-export function calculateScoreForSubmission(passedCount, totalCount) {
-  // Computes the challenge score for coding challenge (prorated to 100)
-  if (totalCount === 0) return 0;
-  return Math.round((passedCount / totalCount) * 100);
-}
-
-// PUBLIC_INTERFACE
-export function calculateXPToAdd(allPassed, challenge) {
-  // Returns XP to grant for full pass (else 0)
-  if (allPassed && challenge && challenge.xp) return challenge.xp;
-  return 0;
-}
-
-// PUBLIC_INTERFACE
-export function getCategoryOptions(challenges) {
-  // Get sorted, deduped, properly ordered list of challenge categories
-  const COMMON = ["React", "Java", "JavaScript", "Python"];
-  const allCategories = challenges.map(ch => ch.category).filter(Boolean);
-  const uniqueCategories = Array.from(new Set(allCategories));
-  const options = [];
-  options.push("All");
-  COMMON.forEach(cat =>
-    uniqueCategories.includes(cat) && !options.includes(cat) && options.push(cat)
-  );
-  uniqueCategories
-    .filter(
-      cat =>
-        !options.includes(cat)
-    )
-    .sort((a, b) => a.localeCompare(b))
-    .forEach(cat => options.push(cat));
-  return options;
 }
