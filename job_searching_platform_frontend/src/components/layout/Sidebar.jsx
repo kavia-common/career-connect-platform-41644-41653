@@ -20,9 +20,7 @@ export default function Sidebar() {
       <NavLink to="/ai-matching" className={linkClassName}>
         AI Job Matching
       </NavLink>
-      <NavLink to="/profile" className={linkClassName}>
-        Skill-based Profile
-      </NavLink>
+
       <NavLink to="/tests" className={linkClassName}>
         Mock Tests
       </NavLink>

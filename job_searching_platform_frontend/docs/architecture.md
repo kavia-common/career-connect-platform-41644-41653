@@ -42,7 +42,7 @@ The following routes define the product surface. These are presented as canonica
 - `/jobs/:id` — Job Details
 - `/applications` — Applications list and management
 - `/applications/:id` — Application details (optional; can be a modal or separate route)
-- `/profile` — Skills-based profile management (skills, experience, education)
+
 - `/tests` — Mock Tests list
 - `/tests/:id` — Mock Test take page
 - `/challenges` — Challenges list (gamified)
@@ -141,7 +141,7 @@ This structure is designed to be implementation-ready and scalable, while fittin
     - `JobSearchPage.jsx`
     - `JobDetailsPage.jsx`
     - `ApplicationsPage.jsx`
-    - `ProfilePage.jsx`
+
     - `MockTestsPage.jsx`
     - `MockTestTakePage.jsx`
     - `ChallengesPage.jsx`

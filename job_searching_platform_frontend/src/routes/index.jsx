@@ -12,7 +12,7 @@ import DashboardPage from "../pages/DashboardPage";
 import JobsPage from "../pages/JobsPage";
 import JobDetailsPage from "../pages/JobDetailsPage";
 import AiJobMatchingPage from "../pages/AiJobMatchingPage";
-import ProfilePage from "../pages/ProfilePage";
+
 import MockTestsPage from "../pages/MockTestsPage";
 import NotificationsPage from "../pages/NotificationsPage";
 import ChallengesPage from "../pages/ChallengesPage";
@@ -70,7 +70,6 @@ export default function AppRoutes() {
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/jobs/:id" element={<JobDetailsPage />} />
         <Route path="/ai-matching" element={<AiJobMatchingPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/tests" element={<MockTestsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/challenges" element={<ChallengesPage />} />

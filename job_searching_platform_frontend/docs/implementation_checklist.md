@@ -149,7 +149,7 @@ The user request includes at least a login page. The following order minimizes d
 2. `RegisterPage` (public)
 3. `ProtectedRoute` + `DashboardPage` (protected shell)
 4. `JobSearchPage` + `JobDetailsPage`
-5. `ProfilePage` (skills editor)
+
 6. `ApplicationsPage` + `ApplicationTimeline`
 7. `NotificationsPage`
 8. `MockTestsPage` + `MockTestTakePage`
