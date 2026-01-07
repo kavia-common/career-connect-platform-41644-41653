@@ -17,7 +17,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 1,
-    title: "React Test",
+    title: "React Fundamentals: Components, JSX & Props",
     category: "React",
     difficulty: "Easy",
     skill: "React",
@@ -138,7 +138,7 @@ export const mockTests = [
   },
   {
     id: 2,
-    title: "React Test",
+    title: "React Hooks Mastery: useState, useEffect & Patterns",
     category: "React",
     difficulty: "Medium",
     skill: "React",
@@ -283,7 +283,7 @@ export const mockTests = [
   },
   {
     id: 9,
-    title: "React Test",
+    title: "Advanced React: Performance, Memoization & Rendering",
     category: "React",
     difficulty: "Hard",
     skill: "React",
@@ -355,7 +355,12 @@ export const mockTests = [
         id: 6,
         question:
           "In React 18, what feature can improve UI responsiveness during heavy updates?",
-        options: ["Strict Mode", "Portals", "Transitions (startTransition)", "Refs"],
+        options: [
+          "Strict Mode",
+          "Portals",
+          "Transitions (startTransition)",
+          "Refs",
+        ],
         correctAnswer: 2,
         explanation:
           "Transitions allow you to mark updates as non-urgent so React can keep the UI responsive by prioritizing more important updates.",
@@ -415,7 +420,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 3,
-    title: "JavaScript Test",
+    title: "JavaScript Essentials: Types, Arrays & Fundamentals",
     category: "JavaScript",
     difficulty: "Easy",
     skill: "JavaScript",
@@ -506,7 +511,12 @@ export const mockTests = [
       {
         id: 8,
         question: "What is the scope of a variable declared with let?",
-        options: ["Function scope only", "Block scope", "Global scope only", "Module scope only"],
+        options: [
+          "Function scope only",
+          "Block scope",
+          "Global scope only",
+          "Module scope only",
+        ],
         correctAnswer: 1,
         explanation:
           "let is block-scoped, meaning it exists only within the nearest enclosing { } block.",
@@ -536,7 +546,7 @@ export const mockTests = [
   },
   {
     id: 4,
-    title: "JavaScript Test",
+    title: "Modern JavaScript: ES6+, Modules & Syntax",
     category: "JavaScript",
     difficulty: "Medium",
     skill: "JavaScript",
@@ -677,7 +687,7 @@ export const mockTests = [
   },
   {
     id: 10,
-    title: "JavaScript Test",
+    title: "Advanced JavaScript: Async, Promises & Event Loop",
     category: "JavaScript",
     difficulty: "Hard",
     skill: "JavaScript",
@@ -817,7 +827,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 5,
-    title: "HTML/CSS Test",
+    title: "HTML & CSS Basics: Semantics, Selectors & Layout",
     category: "HTML/CSS",
     difficulty: "Easy",
     skill: "HTML/CSS",
@@ -928,7 +938,7 @@ export const mockTests = [
   },
   {
     id: 6,
-    title: "HTML/CSS Test",
+    title: "Responsive CSS: Flexbox, Grid & Media Queries",
     category: "HTML/CSS",
     difficulty: "Medium",
     skill: "HTML/CSS",
@@ -1063,7 +1073,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 7,
-    title: "Node.js Test",
+    title: "Node.js Foundations: Runtime, Modules & npm",
     category: "Node.js",
     difficulty: "Easy",
     skill: "Node.js",
@@ -1102,7 +1112,12 @@ export const mockTests = [
       {
         id: 4,
         question: "What does npm stand for?",
-        options: ["Node Package Manager", "New Project Maker", "Network Protocol Module", "Node Process Monitor"],
+        options: [
+          "Node Package Manager",
+          "New Project Maker",
+          "Network Protocol Module",
+          "Node Process Monitor",
+        ],
         correctAnswer: 0,
         explanation:
           "npm is the Node Package Manager, used to install and manage JavaScript packages.",
@@ -1179,7 +1194,7 @@ export const mockTests = [
   },
   {
     id: 8,
-    title: "Node.js Test",
+    title: "Backend & APIs in Node: HTTP, Express & REST Concepts",
     category: "Node.js",
     difficulty: "Hard",
     skill: "Node.js",
@@ -1299,7 +1314,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 11,
-    title: "Java Test",
+    title: "Java Basics: Syntax, Types & OOP Foundations",
     category: "Java",
     difficulty: "Easy",
     skill: "Java",
@@ -1380,7 +1395,12 @@ export const mockTests = [
       {
         id: 8,
         question: "What does JVM stand for?",
-        options: ["Java Verified Modules", "Java Virtual Machine", "Java Visual Model", "Just Valid Memory"],
+        options: [
+          "Java Verified Modules",
+          "Java Virtual Machine",
+          "Java Visual Model",
+          "Just Valid Memory",
+        ],
         correctAnswer: 1,
         explanation:
           "JVM stands for Java Virtual Machine; it runs compiled Java bytecode.",
@@ -1405,7 +1425,7 @@ export const mockTests = [
   },
   {
     id: 12,
-    title: "Java Test",
+    title: "Intermediate Java: Collections, Generics & Core Concepts",
     category: "Java",
     difficulty: "Medium",
     skill: "Java",
@@ -1515,7 +1535,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 13,
-    title: "Python Test",
+    title: "Python Basics: Data Types, Functions & Syntax",
     category: "Python",
     difficulty: "Easy",
     skill: "Python",
@@ -1626,7 +1646,7 @@ export const mockTests = [
   },
   {
     id: 14,
-    title: "Python Test",
+    title: "Intermediate Python: Collections, Comprehensions & Idioms",
     category: "Python",
     difficulty: "Medium",
     skill: "Python",
@@ -1665,7 +1685,12 @@ export const mockTests = [
       {
         id: 4,
         question: "What does enumerate(iterable) provide?",
-        options: ["Only the values", "Only the indices", "Pairs of (index, value)", "Pairs of (key, value)"],
+        options: [
+          "Only the values",
+          "Only the indices",
+          "Pairs of (index, value)",
+          "Pairs of (key, value)",
+        ],
         correctAnswer: 2,
         explanation:
           "enumerate yields (index, value) pairs, commonly used when you need both position and element.",
@@ -1756,7 +1781,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 15,
-    title: "Machine Learning Test",
+    title: "Machine Learning Fundamentals: Supervised vs Unsupervised",
     category: "Machine Learning",
     difficulty: "Easy",
     skill: "Machine Learning",
@@ -1883,7 +1908,12 @@ export const mockTests = [
       {
         id: 10,
         question: "Which is a common normalization/scaling method?",
-        options: ["Standardization (z-score)", "Random shuffling", "One-hot encoding", "Bootstrapping only"],
+        options: [
+          "Standardization (z-score)",
+          "Random shuffling",
+          "One-hot encoding",
+          "Bootstrapping only",
+        ],
         correctAnswer: 0,
         explanation:
           "Standardization rescales features to mean 0 and standard deviation 1, often improving optimization for many models.",
@@ -1892,7 +1922,7 @@ export const mockTests = [
   },
   {
     id: 16,
-    title: "Machine Learning Test",
+    title: "Model Evaluation: Precision, Recall, F1 & Cross-Validation",
     category: "Machine Learning",
     difficulty: "Medium",
     skill: "Machine Learning",
