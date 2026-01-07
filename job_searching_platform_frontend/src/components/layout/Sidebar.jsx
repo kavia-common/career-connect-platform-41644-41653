@@ -11,6 +11,9 @@ const linkClassName = ({ isActive }) =>
 export default function Sidebar() {
   return (
     <nav className="sidebar-nav" aria-label="Primary">
+      <NavLink to="/profile" className={linkClassName}>
+        Profile
+      </NavLink>
       <NavLink to="/dashboard" className={linkClassName}>
         Dashboard
       </NavLink>
@@ -32,9 +35,6 @@ export default function Sidebar() {
       </NavLink>
       <NavLink to="/notifications" className={linkClassName}>
         Notifications
-      </NavLink>
-      <NavLink to="/profile" className={linkClassName}>
-        Profile
       </NavLink>
       <NavLink to="/mentor" className={linkClassName}>
         AI Career Mentor
