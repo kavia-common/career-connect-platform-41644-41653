@@ -33,6 +33,9 @@ export default function Sidebar() {
       <NavLink to="/notifications" className={linkClassName}>
         Notifications
       </NavLink>
+      <NavLink to="/profile" className={linkClassName}>
+        Profile
+      </NavLink>
       <NavLink to="/mentor" className={linkClassName}>
         AI Career Mentor
       </NavLink>

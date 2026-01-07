@@ -18,6 +18,7 @@ import NotificationsPage from "../pages/NotificationsPage";
 import ChallengesPage from "../pages/ChallengesPage";
 import ApplicationsPage from "../pages/ApplicationsPage";
 import MentorPage from "../pages/MentorPage";
+import ProfilePage from "../pages/ProfilePage";
 
 /**
  * PUBLIC_INTERFACE
@@ -75,6 +76,7 @@ export default function AppRoutes() {
         <Route path="/challenges" element={<ChallengesPage />} />
         <Route path="/applications" element={<ApplicationsPage />} />
         <Route path="/mentor" element={<MentorPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
