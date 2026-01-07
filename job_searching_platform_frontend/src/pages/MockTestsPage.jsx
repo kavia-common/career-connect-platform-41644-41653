@@ -21,7 +21,11 @@ const DIFFICULTY_OPTIONS = ["All", "Easy", "Medium", "Hard"];
 export default function MockTestsPage() {
   const [progressByTestId, setProgressByTestId] = useState({});
   const [activeTestId, setActiveTestId] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  // Category becomes the primary browsing mechanism:
+  // - default to first real category (not "All")
+  // - do not show an "All categories" combined view
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
 
   // Load persisted progress once.
@@ -41,15 +45,32 @@ export default function MockTestsPage() {
       new Set(mockTests.map((t) => t.category).filter(Boolean))
     ).sort((a, b) => a.localeCompare(b));
 
-    // Ensure "All" is always present and categories are de-duplicated.
-    const fromExport = Array.isArray(mockTestCategories)
-      ? mockTestCategories
-      : ["All", ...derived];
+    const fromExport = Array.isArray(mockTestCategories) ? mockTestCategories : derived;
 
-    const normalized = Array.from(new Set(fromExport.filter(Boolean)));
-    if (!normalized.includes("All")) normalized.unshift("All");
+    // Remove "All" (we no longer provide an aggregated category view).
+    const normalized = Array.from(new Set(fromExport.filter(Boolean))).filter(
+      (c) => c !== "All"
+    );
+
+    // Always ensure we have some categories (fallback to derived dataset).
+    if (normalized.length === 0) return derived;
+
     return normalized;
   }, []);
+
+  // When categories are available, ensure we always have an active category selected.
+  useEffect(() => {
+    if (!selectedCategory && allCategories.length > 0) {
+      setSelectedCategory(allCategories[0]);
+    } else if (
+      selectedCategory &&
+      allCategories.length > 0 &&
+      !allCategories.includes(selectedCategory)
+    ) {
+      // Dataset changed: fall back to first available category.
+      setSelectedCategory(allCategories[0]);
+    }
+  }, [allCategories, selectedCategory]);
 
   const allDifficulties = useMemo(() => {
     // Keep UI stable ("All/Easy/Medium/Hard") but allow dataset drift safely.
@@ -60,16 +81,18 @@ export default function MockTestsPage() {
     );
 
     // If dataset has unknown difficulty values, include them after the known ones.
-    const extras = Array.from(dataset).filter((d) => !DIFFICULTY_OPTIONS.includes(d));
+    const extras = Array.from(dataset).filter(
+      (d) => !DIFFICULTY_OPTIONS.includes(d)
+    );
     return [...DIFFICULTY_OPTIONS, ...extras];
   }, []);
 
   const filteredTests = useMemo(() => {
+    // Category is required for browsing; if not available yet, show none.
+    if (!selectedCategory) return [];
+
     return mockTests.filter((t) => {
-      const matchesCategory =
-        !selectedCategory || selectedCategory === "All"
-          ? true
-          : t.category === selectedCategory;
+      const matchesCategory = t.category === selectedCategory;
 
       const matchesDifficulty =
         !selectedDifficulty || selectedDifficulty === "All"
@@ -343,6 +366,10 @@ function FiltersPanel({
     return counts;
   }, [tests]);
 
+  const totalInSelectedCategory = selectedCategory
+    ? countsByCategory[selectedCategory] ?? 0
+    : 0;
+
   return (
     <div className="card">
       <div className="card-body" style={{ display: "grid", gap: 12 }}>
@@ -356,7 +383,20 @@ function FiltersPanel({
           }}
         >
           <div className="muted" style={{ fontSize: 13 }}>
-            Showing <strong>{filteredCount}</strong> of <strong>{tests.length}</strong>
+            {selectedCategory ? (
+              <>
+                Showing <strong>{filteredCount}</strong> in{" "}
+                <strong>{selectedCategory}</strong>
+                {" "}
+                <span style={{ opacity: 0.8 }}>
+                  (of {totalInSelectedCategory} in category)
+                </span>
+              </>
+            ) : (
+              <>
+                Showing <strong>{filteredCount}</strong>
+              </>
+            )}
           </div>
         </div>
 
@@ -369,8 +409,7 @@ function FiltersPanel({
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {categories.map((cat) => {
                 const isActive = cat === selectedCategory;
-                const count =
-                  cat === "All" ? tests.length : (countsByCategory[cat] ?? 0);
+                const count = countsByCategory[cat] ?? 0;
 
                 return (
                   <button
@@ -378,7 +417,7 @@ function FiltersPanel({
                     className={isActive ? "btn" : "btn btn-ghost"}
                     onClick={() => onSelectCategory(cat)}
                     style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-                    title={cat === "All" ? "Show all tests" : `Show ${cat} tests`}
+                    title={`Show ${cat} tests`}
                   >
                     <span>{cat}</span>
                     <span
@@ -404,7 +443,7 @@ function FiltersPanel({
               {difficulties.map((diff) => {
                 const isActive = diff === selectedDifficulty;
                 const count =
-                  diff === "All" ? tests.length : (countsByDifficulty[diff] ?? 0);
+                  diff === "All" ? totalInSelectedCategory : (countsByDifficulty[diff] ?? 0);
 
                 return (
                   <button
