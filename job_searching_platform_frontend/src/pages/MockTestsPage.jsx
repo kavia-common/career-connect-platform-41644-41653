@@ -28,6 +28,16 @@ export default function MockTestsPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
 
+  // PUBLIC_INTERFACE
+  function resetFilters() {
+    /** Reset filters back to defaults (All/All). */
+    setSelectedCategory("All");
+    setSelectedDifficulty("All");
+
+    // If URL query params are introduced later, this is the hook to clear/sync them.
+    // (Currently this page does not use query params for filters.)
+  }
+
   // Load persisted progress once.
   useEffect(() => {
     const stored = safeParseJson(localStorage.getItem(STORAGE_KEY), {});
@@ -294,6 +304,7 @@ export default function MockTestsPage() {
       onSelectCategory={setSelectedCategory}
       selectedDifficulty={selectedDifficulty}
       onSelectDifficulty={setSelectedDifficulty}
+      onResetFilters={resetFilters}
       tests={mockTests}
       filteredCount={filteredTests.length}
     />
@@ -368,6 +379,7 @@ function FiltersPanel({
   onSelectCategory,
   selectedDifficulty,
   onSelectDifficulty,
+  onResetFilters,
   tests,
   filteredCount,
 }) {
@@ -463,6 +475,21 @@ function FiltersPanel({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              <div className="muted" style={{ fontSize: 13 }}>
+                &nbsp;
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={onResetFilters}
+                disabled={selectedCategory === "All" && selectedDifficulty === "All"}
+                title="Reset filters back to All"
+              >
+                Reset
+              </button>
             </div>
           </div>
 
