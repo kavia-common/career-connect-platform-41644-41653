@@ -449,7 +449,7 @@ function FiltersPanel({
                 htmlFor="mocktests_difficulty"
                 style={{ fontSize: 13 }}
               >
-                Difficulty
+                Exam Level
               </label>
               <select
                 id="mocktests_difficulty"
