@@ -1,20 +1,31 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import challengesData from "../data/challengesData";
+import "../styles/components.css";
+import "../styles/theme.css";
 import CodeRunner from "../components/CodeRunner";
-import {
-  getScore,
-  setScore,
-  incrementScore,
-  resetScore,
-  getStreak,
-  incrementStreak,
-  resetStreak,
-  addToLeaderboard,
-  getLeaderboard,
-  getInitialTimer
-} from "../utils/challengeGameUtils";
 
-// Executive Gray constants for inline quick styling
+const STORAGE_KEY = "challengeAttemptsV3";
+
+// PUBLIC_INTERFACE
+function getStoredAttempts() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+// PUBLIC_INTERFACE
+function saveAttempt(challengeId, userCode, isCorrect) {
+  const attempts = getStoredAttempts();
+  attempts[challengeId] = {
+    userCode,
+    isCorrect,
+    timestamp: new Date().toISOString(),
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(attempts));
+}
+
 const theme = {
   primary: "#374151",
   secondary: "#9CA3AF",
@@ -25,383 +36,227 @@ const theme = {
   error: "#DC2626",
 };
 
-function formatTimer(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+const codeInputStyle = {
+  width: "100%",
+  minHeight: "75px",
+  background: theme.background,
+  color: theme.text,
+  border: `1px solid ${theme.secondary}`,
+  borderRadius: "6px",
+  padding: "0.5em",
+  fontFamily: "monospace",
+  marginBottom: "0.5em",
+  fontSize: "1em",
+};
+
+const multiBoxStyle = {
+  background: theme.surface,
+  boxShadow: "0 1px 8px 0 #37415115",
+  borderRadius: 8,
+  marginBottom: "1.5em",
+  padding: "1.5em 1.2em",
+};
+
+function runUserFunction(userCode, funcName, testCases) {
+  // Evaluates user code in an isolated Function context for all test cases
+  // Returns {pass: boolean, results: Array<{expected, actual, pass}>}
+  try {
+    // eslint-disable-next-line no-new-func
+    const fullCode = `
+      ${userCode}
+      return typeof ${funcName} === "function" ? ${funcName} : null;
+    `;
+    const userFunc = new Function(fullCode)();
+    if (typeof userFunc !== "function") {
+      return { pass: false, results: testCases.map(tc => ({ ...tc, actual: undefined, pass: false, reason: "Function not found" })) };
+    }
+    const results = testCases.map(tc => {
+      let actual, pass;
+      try {
+        actual = userFunc(...tc.input);
+        // Use deep equality for primitive values, and special handling for objects
+        pass = (typeof tc.output === "object" && tc.output !== null)
+          ? JSON.stringify(actual) === JSON.stringify(tc.output)
+          : actual === tc.output;
+      } catch (e) {
+        return { ...tc, actual: undefined, pass: false, reason: e.message };
+      }
+      return { ...tc, actual, pass };
+    });
+    return { pass: results.every(r => r.pass), results };
+  } catch (err) {
+    return { pass: false, results: testCases.map(tc => ({ ...tc, actual: undefined, pass: false, reason: err.message })) };
+  }
 }
 
 export default function ChallengesPage() {
-  // UI/game state
-  const [selectedIdx, setSelectedIdx] = useState(0);
-  const [selectedChallenge, setSelectedChallenge] = useState(challengesData[0]);
-  const [showSolution, setShowSolution] = useState(false);
-
-  // Code/attempt/feedback
+  // User code answers per challenge: { [id]: userCode }
   const [userCode, setUserCode] = useState({});
+  // Challenge attempts state: { [id]: { userCode, isCorrect, timestamp } }
+  const [attempts, setAttempts] = useState({});
+  // Feedback/results per challenge
   const [feedback, setFeedback] = useState({});
-  const [attempted, setAttempted] = useState({});
-  const [isCorrect, setIsCorrect] = useState({});
 
-  // Score, streak, leaderboard
-  const [score, setScoreState] = useState(getScore());
-  const [streak, setStreakState] = useState(getStreak());
-  const [leaderboard, setLeaderboard] = useState(getLeaderboard());
-  const [username, setUsername] = useState(() => (localStorage.getItem("challenge_user") || "").substring(0,32));
-
-  // Timer
-  const [timeLeft, setTimeLeft] = useState(getInitialTimer());
-  const [timerActive, setTimerActive] = useState(false);
-  const timerRef = useRef(null);
-
-  // On challenge change: reset code, feedback, timer etc
   useEffect(() => {
-    setShowSolution(false);
-    setSelectedChallenge(challengesData[selectedIdx]);
-    setTimeLeft(getInitialTimer());
-    setTimerActive(true);
-    setUserCode(prev => ({ ...prev, [challengesData[selectedIdx].id]: "" }));
-    if (timerRef.current) clearInterval(timerRef.current);
-    // Timer interval management
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          setTimerActive(false);
-          setShowSolution(true);
-          resetStreak();
-          setStreakState(0);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-    // eslint-disable-next-line
-  }, [selectedIdx]);
-
-  // Sync with localStorage for cross-tab
-  useEffect(() => {
-    const handler = () => {
-      setScoreState(getScore());
-      setStreakState(getStreak());
-      setLeaderboard(getLeaderboard());
-    };
-    window.addEventListener("storage", handler);
-    return () => window.removeEventListener("storage", handler);
+    setAttempts(getStoredAttempts());
   }, []);
 
-  // Handlers for scoring/timer/leaderboard on code submission
-  const handleEvaluation = (details) => {
-    const cid = selectedChallenge.id;
-    if (!timerActive || timeLeft === 0) return;
-    if (details.correct) {
-      setShowSolution(false);
-      const newScore = incrementScore(10); // +10/solve
-      setScoreState(newScore);
-      const newStreak = incrementStreak();
-      setStreakState(newStreak);
-      setIsCorrect(s => ({ ...s, [cid]: true }));
-      // Leaderboard
-      if (username) {
-        setLeaderboard(addToLeaderboard(username, newScore));
-      }
-      setTimerActive(false); // Stop timer
-    } else {
-      setShowSolution(true);
-      setIsCorrect(s => ({ ...s, [cid]: false }));
-      resetStreak();
-      setStreakState(0);
-      setTimerActive(false);
-    }
+  const handleCodeChange = (id, value) => {
+    setUserCode((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+    // Reset feedback on typing
+    setFeedback((prev) => ({
+      ...prev,
+      [id]: undefined,
+    }));
   };
 
-  // Score/streak reset all
-  const handleResetProgress = () => {
-    resetScore();
-    resetStreak();
-    setScoreState(0);
-    setStreakState(0);
-    setLeaderboard([]);
+  // PUBLIC_INTERFACE
+  const handleSubmit = (challenge) => (e) => {
+    e.preventDefault();
+    const codeAns = userCode[challenge.id] || "";
+    // Evaluate function for all test cases
+    const { pass, results } = runUserFunction(codeAns, challenge.funcName, challenge.testCases);
+    setFeedback((prev) => ({
+      ...prev,
+      [challenge.id]: { pass, results },
+    }));
+    saveAttempt(challenge.id, codeAns, pass);
+    setAttempts((prev) => ({
+      ...prev,
+      [challenge.id]: {
+        userCode: codeAns,
+        isCorrect: pass,
+        timestamp: new Date().toISOString(),
+      },
+    }));
   };
-
-  // Challenge list selection
-  const handleSelectChallenge = (i) => {
-    setSelectedIdx(i);
-  };
-
-  // Username management
-  const handleUsernameChange = e => {
-    const name = e.target.value.substring(0,32);
-    setUsername(name);
-    localStorage.setItem("challenge_user", name);
-  };
-
-  // Styling for timer
-  const timerColor =
-    timeLeft === 0 ? theme.error :
-    timeLeft <= 10 ? "#DC2626" :
-    timeLeft <= 30 ? "#FFD326" :
-    theme.primary;
 
   return (
-    <div style={{ background: theme.background, minHeight: "100vh", padding: "2em 0" }}>
-      <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 12px" }}>
-        <h2 style={{ color: theme.primary, fontWeight: 800, fontSize: "2em", margin: "0 0 26px 0" }}>
-          Coding Challenges
-        </h2>
-        {/* Score | streak | timer | name bar */}
-        <div style={{
-          display: "flex", flexWrap: "wrap", alignItems: "center", marginBottom: 24, gap: 10
-        }}>
-          <span style={{
-            background: "linear-gradient(to right, #37415112, #9CA3AF20)",
-            border: "1px solid #9CA3AF77",
-            color: theme.primary,
-            borderRadius: 8, fontSize: 18,
-            fontFamily: "monospace", padding: "5px 18px", fontWeight: 600
-          }}>
-            Score: <span style={{ fontWeight: 800 }}>{score}</span>
-          </span>
-          <span style={{
-            padding: "4px 18px", marginLeft: 8, background: theme.surface,
-            border: "1px solid #eee", borderRadius: 6,
-            color: theme.secondary, fontFamily: "monospace"
-          }}>
-            Streak: <span style={{ fontWeight: 700, color: theme.success }}>{streak}</span>
-          </span>
-          {/* timer */}
-          <span style={{
-            color: timerColor,
-            fontWeight: 800,
-            fontFamily: "monospace",
-            fontSize: 19,
-            marginLeft: "auto",
-            marginRight: 12,
-            letterSpacing: 2
-          }}>
-            {timerActive ? `⏰ ${formatTimer(timeLeft)}` :
-              (timeLeft === 0 ? "Time's up!" : "")}
-          </span>
-          {/* Leaderboard username input */}
-          <input
-            type="text"
-            placeholder="Name for leaderboard"
-            maxLength={32}
-            value={username}
-            onChange={handleUsernameChange}
-            style={{
-              padding: "5px 10px",
-              border: "1px solid #BBB",
-              borderRadius: 6,
-              fontSize: 13,
-              color: theme.primary,
-              minWidth: 120
-            }}
-            disabled={!!leaderboard.find(entry => entry.username === username)}
-          />
-          <button
-            style={{
-              marginLeft: 7,
-              background: theme.surface,
-              color: theme.error,
-              border: "1px solid #e5e7eb",
-              borderRadius: 6,
-              fontWeight: 600,
-              fontSize: 13,
-              padding: "4px 12px"
-            }}
-            onClick={handleResetProgress}
-          >
-            Reset Progress
-          </button>
-        </div>
-        <div style={{ display: "flex", gap: 36 }}>
-          {/* Sidebar list + leaderboard */}
-          <div style={{ flex: "0 0 220px" }}>
-            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {challengesData.map((challenge, i) => (
-                <li
-                  key={challenge.id}
-                  style={{
-                    background: selectedIdx === i ? theme.primary : theme.surface,
-                    color: selectedIdx === i ? "#fff" : theme.primary,
-                    borderRadius: 8,
-                    boxShadow: "0 1px 7px #bbb2",
-                    marginBottom: 13,
-                    cursor: "pointer",
-                    padding: "9px 13px",
-                    fontWeight: 600,
-                    transition: "all .14s"
-                  }}
-                  onClick={() => handleSelectChallenge(i)}
-                >
-                  {challenge.title}
-                </li>
-              ))}
-              {/* Leaderboard */}
-              <li style={{
-                marginTop: 36,
-                background: theme.surface,
-                borderRadius: 12,
-                boxShadow: "0 1px 8px #aaa5",
-                padding: "10px 14px"
-              }}>
-                <div style={{ fontWeight: 700, color: theme.primary, fontSize: "1.05em", marginBottom: 2 }}>
-                  🏆 Leaderboard
-                </div>
-                <ol style={{ paddingLeft: 18 }}>
-                  {leaderboard.length === 0 ? (
-                    <li style={{ color: theme.secondary, fontFamily: "monospace", fontSize: 13 }}>
-                      No scores yet!
-                    </li>
-                  ) : (
-                    leaderboard.map((entry, i) => (
-                      <li
-                        key={entry.username}
-                        style={{
-                          color: entry.username === username ? theme.success : theme.primary,
-                          fontWeight: entry.username === username ? 700 : 500,
-                          fontFamily: "monospace",
-                          display: "flex", alignItems: "center", gap: 5,
-                          fontSize: 15
-                        }}
-                      >
-                        <span style={{ minWidth: 20, display: "inline-block" }}>
-                          {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1) + "."}
-                        </span>
-                        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {entry.username}
-                        </span>
-                        <span style={{ marginLeft: 8 }}>{entry.score}</span>
-                      </li>
-                    ))
-                  )}
-                </ol>
-              </li>
-            </ul>
-          </div>
-          {/* Main challenge runner */}
-          <div style={{
-            flex: "1 1 0 %",
-            background: theme.surface,
-            borderRadius: 12,
-            boxShadow: "0 3px 22px #11111109",
-            padding: "32px 24px",
-            minWidth: 0
-          }}>
-            <h3 style={{ fontWeight: 800, color: theme.primary, fontSize: "1.18em", margin: "0 0 4px 0" }}>
-              {selectedChallenge.title}
-            </h3>
-            <p style={{ color: theme.text, marginBottom: 10 }}>{selectedChallenge.description}</p>
-            <textarea
-              value={userCode[selectedChallenge.id] ?? ""}
-              onChange={e =>
-                setUserCode(prev => ({
-                  ...prev,
-                  [selectedChallenge.id]: e.target.value
-                }))
-              }
-              placeholder={`Write your function: function ${selectedChallenge.funcName}(${selectedChallenge.testCases[0]?.input?.map((_,i)=>`arg${i+1}`).join(",") || ""}) { ... }`}
-              disabled={isCorrect[selectedChallenge.id]}
-              style={{
-                width: "100%",
-                minHeight: 90,
-                background: theme.background,
-                color: theme.text,
-                border: `1px solid ${theme.secondary}`,
-                borderRadius: "6px",
-                padding: ".56em",
-                fontFamily: "monospace",
-                marginBottom: ".7em",
-                fontSize: "1em"
-              }}
-              spellCheck={false}
-              autoFocus={false}
-            />
-            <CodeRunner
-              code={userCode[selectedChallenge.id] ?? ""}
-              disabled={!timerActive || timeLeft === 0 || isCorrect[selectedChallenge.id]}
-              challenge={selectedChallenge}
-              showSolution={showSolution}
-              onShowSolution={() => setShowSolution(true)}
-              onSubmitEvaluation={handleEvaluation}
-            />
-            <button
-              onClick={e => {
-                e.preventDefault();
-                if (!timerActive || timeLeft === 0 || isCorrect[selectedChallenge.id]) return;
-                // Quick evaluation logic (copy from runUserFunction in original)
-                let details = { correct: false };
-                try {
-                  // eslint-disable-next-line no-new-func
-                  const fullCode = `
-                    ${userCode[selectedChallenge.id] || ""}
-                    return typeof ${selectedChallenge.funcName} === "function" ? ${selectedChallenge.funcName} : null;
-                  `;
-                  const userFunc = new Function(fullCode)();
-                  if (typeof userFunc !== "function") {
-                    details = { correct: false };
-                  } else {
-                    const results = selectedChallenge.testCases.map(tc => {
-                      let actual, pass;
-                      try {
-                        actual = userFunc(...tc.input);
-                        pass = (typeof tc.output === "object" && tc.output !== null)
-                          ? JSON.stringify(actual) === JSON.stringify(tc.output)
-                          : actual === tc.output;
-                      } catch (err) {
-                        pass = false;
-                      }
-                      return { ...tc, actual, pass };
-                    });
-                    details = { correct: results.every(r => r.pass) };
-                  }
-                } catch {
-                  details = { correct: false };
-                }
-                handleEvaluation(details);
-              }}
-              disabled={!timerActive || timeLeft === 0 || isCorrect[selectedChallenge.id]}
-              style={{
-                marginTop: 10,
-                background: isCorrect[selectedChallenge.id] ? theme.success : theme.primary,
-                color: theme.surface,
-                border: "none",
-                borderRadius: 6,
-                padding: "0.48em 1.8em",
-                fontFamily: "inherit",
-                fontWeight: 700,
-                fontSize: "1.08em",
-                cursor: (!timerActive || timeLeft === 0 || isCorrect[selectedChallenge.id]) ? "not-allowed" : "pointer",
-                opacity: (!timerActive || timeLeft === 0 || isCorrect[selectedChallenge.id]) ? 0.56 : 1
-              }}
-            >
-              {isCorrect[selectedChallenge.id] ? "Submitted" : "Submit"}
-            </button>
-            {showSolution && (
-              <div style={{ color: theme.error, marginTop: 16, fontWeight: 600 }}>
-                {timeLeft === 0 ? "Time expired. Streak reset." : "Incorrect. Streak reset."}
-                <pre style={{
-                  background: "#F9FAFB",
-                  border: `1px solid #e5e7eb`,
-                  borderRadius: 6,
-                  color: theme.secondary,
-                  fontFamily: "monospace",
-                  fontSize: ".97em",
-                  marginTop: 8,
-                  padding: "0.8em"
-                }}>
-                  {/* Show sample correct implementation, if desired */}
-                  {/* (Implementation not shown) */}
-                </pre>
-              </div>
-            )}
-          </div>
+    <main style={{ background: theme.background, minHeight: "100vh", padding: "1.6em 6vw" }}>
+      <h1 style={{ color: theme.primary, fontWeight: 800, fontSize: "2.1em" }}>
+        Gamified Coding Challenges
+      </h1>
+      <div style={{ margin: "1.2em 0 2em 0" }}>
+        <div style={{ display: "flex", gap: "20px", alignItems: "end", flexWrap: "wrap" }}>
+          {/* Category and XP removed as per new schema */}
         </div>
       </div>
-    </div>
+      {challengesData.length === 0 ? (
+        <div>No coding challenges provided.</div>
+      ) : (
+        challengesData.map((challenge) => {
+          const attempted = !!attempts[challenge.id];
+          const isCorrect = attempted && attempts[challenge.id].isCorrect;
+          const fb = feedback[challenge.id];
+          return (
+            <section key={challenge.id} style={multiBoxStyle}>
+              <h2 style={{
+                color: theme.primary,
+                fontSize: "1.13em",
+                fontWeight: 700,
+                margin: 0,
+                marginBottom: 5,
+              }}>{challenge.title || challenge.funcName}</h2>
+              <div style={{ color: theme.text, marginBottom: 8 }}>
+                {challenge.description}
+              </div>
+              <form onSubmit={handleSubmit(challenge)} style={{ marginTop: "1em" }}>
+                <textarea
+                  value={userCode[challenge.id] ?? (attempts[challenge.id]?.userCode || "")}
+                  onChange={(e) => handleCodeChange(challenge.id, e.target.value)}
+                  style={codeInputStyle}
+                  placeholder={`Write your function: function ${challenge.funcName}(${challenge.testCases[0]?.input?.map((_,i)=>`arg${i+1}`).join(",") || ""}) { ... }`}
+                  disabled={isCorrect}
+                  spellCheck="false"
+                  autoFocus={false}
+                />
+                <CodeRunner
+                  code={userCode[challenge.id] ?? (attempts[challenge.id]?.userCode || "")}
+                  disabled={isCorrect}
+                />
+                <button
+                  type="submit"
+                  disabled={isCorrect}
+                  style={{
+                    background: isCorrect ? theme.success : theme.primary,
+                    color: theme.surface,
+                    border: "none",
+                    borderRadius: "5px",
+                    padding: "0.5em 1.5em",
+                    cursor: isCorrect ? "default" : "pointer",
+                    fontWeight: 600,
+                    letterSpacing: ".03em",
+                    marginTop: 12,
+                  }}
+                >
+                  {isCorrect ? "Submitted" : "Submit"}
+                </button>
+                {fb && (
+                  <span
+                    style={{
+                      marginLeft: "1em",
+                      color: fb.pass ? theme.success : theme.error,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {fb.pass
+                      ? "All tests passed!"
+                      : "Some test cases failed (see below)."}
+                  </span>
+                )}
+                {isCorrect && (
+                  <div style={{ color: theme.success, marginTop: "0.75em" }}>
+                    ✔️ Correct!
+                  </div>
+                )}
+              </form>
+              {/* Per-test-case feedback */}
+              {(fb && fb.results.length > 0) && (
+                <div style={{
+                  marginTop: 16,
+                  background: "#F3F4F6",
+                  border: `1px solid ${theme.secondary}`,
+                  borderRadius: "6px",
+                  padding: "0.75em",
+                  fontFamily: "monospace",
+                  fontSize: "0.99em",
+                }}>
+                  <div style={{ fontWeight: 500, color: theme.primary, marginBottom: 6 }}>
+                    Test Cases:
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {fb.results.map((tc, idx) => (
+                      <li key={idx} style={{ marginBottom: 2 }}>
+                        <span style={{ fontWeight: 600, color: tc.pass ? theme.success : theme.error }}>
+                          [{tc.pass ? "✓" : "✗"}]
+                        </span>{" "}
+                        <span>
+                          <strong>Input:</strong> {JSON.stringify(tc.input)}
+                          {" | "}
+                          <strong>Expected:</strong> {JSON.stringify(tc.output)}
+                          {" | "}
+                          <strong>Actual:</strong> {JSON.stringify(tc.actual)}
+                          {tc.reason && (
+                            <span style={{ color: theme.error }}> ({tc.reason})</span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {attempted && !isCorrect && attempts[challenge.id].userCode && (
+                <div style={{ color: theme.error, marginTop: "0.6em" }}>
+                  Last attempt: <code>{attempts[challenge.id].userCode}</code>
+                </div>
+              )}
+            </section>
+          );
+        })
+      )}
+    </main>
   );
 }

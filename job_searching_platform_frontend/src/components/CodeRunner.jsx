@@ -1,31 +1,21 @@
 import React, { useRef, useState } from "react";
 
 /**
- * CodeRunner with support for onSubmitEvaluation and onShowSolution.
+ * CodeRunner
+ * Runs user-provided JavaScript code in a sandboxed Web Worker,
+ * capturing stdout (console.log) and errors, and displaying them.
+ * Shows a minimal guidance about the sandbox security.
  * 
  * Props:
  *   code: string - the user code to execute
- *   challenge: object - coding challenge meta (optional)
- *   disabled: boolean - disables the Run button and editing
- *   onSubmitEvaluation: function({ correct }) - called with evaluation result after running code
- *   onShowSolution: function() - called to show solution if incorrect
- *   showSolution: boolean - if true, shows solution (needed for parent page)
+ *   disabled: boolean - if true, disables the Run button
  */
-const CodeRunner = ({ 
-  code = "",
-  challenge,
-  disabled = false,
-  onSubmitEvaluation,
-  onShowSolution,
-  showSolution
-}) => {
+const CodeRunner = ({ code = "", disabled = false }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
-  const [lastCorrect, setLastCorrect] = useState(false);
-
   const workerRef = useRef(null);
 
-  // This runner is used for feedback output, not for challenge judging (handled in parent)
+  // PUBLIC_INTERFACE
   function runCode() {
     setOutput("");
     setIsRunning(true);
@@ -35,6 +25,7 @@ const CodeRunner = ({
       self.onmessage = function(e) {
         const code = e.data;
         let stdout = '';
+        // Patch console.log to capture output
         const originalLog = console.log;
         console.log = function(...args) {
           stdout += args.join(' ') + '\\n';
@@ -42,7 +33,9 @@ const CodeRunner = ({
         };
         try {
           let result;
-          (function(){ "use strict";
+          // Prevent access to self, importScripts, window, etc.
+          (function(){ 
+            "use strict";
             result = eval(code);
           }).call({});
           if (typeof result !== "undefined") {
