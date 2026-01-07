@@ -349,16 +349,12 @@ function FiltersPanel({
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: "flex-end",
             gap: 10,
             flexWrap: "wrap",
             alignItems: "center",
           }}
         >
-          <div className="h2" style={{ margin: 0 }}>
-            Browse tests
-          </div>
-
           <div className="muted" style={{ fontSize: 13 }}>
             Showing <strong>{filteredCount}</strong> of <strong>{tests.length}</strong>
           </div>
