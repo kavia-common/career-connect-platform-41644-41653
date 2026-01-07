@@ -54,25 +54,75 @@ function safeSaveProgress(progress) {
  * - A challenge is "completed" only if all answers match (case-insensitive, trimmed).
  * - Completing a challenge awards its XP exactly once.
  * - Progress and total XP persist via localStorage.
+ * - Category filter controls which challenges are shown (attempt flow unaffected).
  */
 export default function ChallengesPage() {
   const [progress, setProgress] = useState(() => safeLoadProgress());
+
+  // Browsing/filtering state
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   // Attempt UI state
   const [activeChallengeId, setActiveChallengeId] = useState(null);
   const [answersByIndex, setAnswersByIndex] = useState({});
   const [submitted, setSubmitted] = useState(false);
 
-  const activeChallenge = useMemo(() => {
-    if (activeChallengeId == null) return null;
-    return challenges.find((c) => c.id === activeChallengeId) ?? null;
-  }, [activeChallengeId]);
-
   const completedById = progress.completedById || {};
 
   useEffect(() => {
     safeSaveProgress(progress);
   }, [progress]);
+
+  const allCategories = useMemo(() => {
+    /**
+     * Dropdown order requirement:
+     * - "All" first
+     * - Then common categories: React, JavaScript, Python (if present)
+     * - Then remaining categories A–Z
+     *
+     * We derive from `challenges` and keep resilient to dataset changes.
+     */
+    const derived = Array.from(
+      new Set(challenges.map((c) => c.skill).filter(Boolean))
+    );
+
+    const PRIORITY = ["All", "React", "JavaScript", "Python"];
+    const prioritySet = new Set(PRIORITY);
+
+    const rest = derived
+      .filter((c) => !prioritySet.has(c))
+      .sort((a, b) => a.localeCompare(b));
+
+    // Include only categories that exist in data, but always keep "All" first.
+    const prioritized = PRIORITY.filter(
+      (c) => c === "All" || derived.includes(c)
+    );
+
+    return [...prioritized, ...rest];
+  }, []);
+
+  // Keep selected category valid if dataset changes.
+  useEffect(() => {
+    if (!selectedCategory) {
+      setSelectedCategory("All");
+      return;
+    }
+    if (selectedCategory !== "All" && allCategories.length > 0) {
+      const allowed = new Set(allCategories);
+      if (!allowed.has(selectedCategory)) setSelectedCategory("All");
+    }
+  }, [allCategories, selectedCategory]);
+
+  const filteredChallenges = useMemo(() => {
+    if (!selectedCategory || selectedCategory === "All") return challenges;
+    return challenges.filter((c) => c.skill === selectedCategory);
+  }, [selectedCategory]);
+
+  const activeChallenge = useMemo(() => {
+    if (activeChallengeId == null) return null;
+    // IMPORTANT: use full dataset (not filtered) so an in-progress attempt remains valid.
+    return challenges.find((c) => c.id === activeChallengeId) ?? null;
+  }, [activeChallengeId]);
 
   function startAttempt(challengeId) {
     setActiveChallengeId(challengeId);
@@ -136,6 +186,21 @@ export default function ChallengesPage() {
     return gradeAttempt(activeChallenge);
   }, [activeChallenge, submitted, answersByIndex]);
 
+  const categoryCounts = useMemo(() => {
+    const counts = {};
+    for (const c of challenges) {
+      const cat = c.skill || "Other";
+      counts[cat] = (counts[cat] || 0) + 1;
+    }
+    return counts;
+  }, []);
+
+  const filteredCount = filteredChallenges.length;
+  const totalInSelectedCategory =
+    selectedCategory === "All"
+      ? challenges.length
+      : categoryCounts[selectedCategory] ?? 0;
+
   return (
     <div className="container" style={{ display: "grid", gap: 16 }}>
       {/* Header + stats */}
@@ -156,9 +221,7 @@ export default function ChallengesPage() {
               <span style={{ color: "var(--color-text)" }}>
                 {progress.totalXp}
               </span>{" "}
-              <span style={{ fontWeight: 400 }}>
-                / {stats.totalXpPossible}
-              </span>
+              <span style={{ fontWeight: 400 }}>/ {stats.totalXpPossible}</span>
             </div>
           </div>
 
@@ -349,9 +412,7 @@ export default function ChallengesPage() {
                 <div className="card-body" style={{ padding: 12 }}>
                   {attemptGrade.allCorrect ? (
                     <div style={{ display: "grid", gap: 6 }}>
-                      <div style={{ fontWeight: 900 }}>
-                        Challenge completed!
-                      </div>
+                      <div style={{ fontWeight: 900 }}>Challenge completed!</div>
                       <div className="muted">
                         {completedById[activeChallenge.id]
                           ? "XP was already awarded for this challenge."
@@ -360,12 +421,10 @@ export default function ChallengesPage() {
                     </div>
                   ) : (
                     <div style={{ display: "grid", gap: 6 }}>
-                      <div style={{ fontWeight: 900 }}>
-                        Not quite—try again.
-                      </div>
+                      <div style={{ fontWeight: 900 }}>Not quite—try again.</div>
                       <div className="muted">
-                        Review the expected answers above, then return to the
-                        list and start the challenge again.
+                        Review the expected answers above, then return to the list
+                        and start the challenge again.
                       </div>
                     </div>
                   )}
@@ -387,8 +446,62 @@ export default function ChallengesPage() {
               }}
             >
               <h2 className="h2">Available challenges</h2>
-              <div className="muted">
-                Tip: Answers are checked case-insensitively.
+              <div className="muted">Tip: Answers are checked case-insensitively.</div>
+            </div>
+
+            {/* Filters */}
+            <div
+              className="card"
+              style={{ border: "1px solid rgba(0,0,0,0.06)", borderRadius: 10 }}
+            >
+              <div
+                className="card-body"
+                style={{
+                  padding: 12,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  alignItems: "end",
+                }}
+              >
+                <div style={{ display: "grid", gap: 6, minWidth: 240 }}>
+                  <label
+                    className="muted"
+                    htmlFor="challenges_category"
+                    style={{ fontSize: 13 }}
+                  >
+                    Category
+                  </label>
+                  <select
+                    id="challenges_category"
+                    className="input"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                  >
+                    {allCategories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="muted" style={{ fontSize: 13, textAlign: "right" }}>
+                  Showing <strong>{filteredCount}</strong>{" "}
+                  {selectedCategory === "All" ? (
+                    <>
+                      total <span style={{ opacity: 0.85 }}>(all categories)</span>
+                    </>
+                  ) : (
+                    <>
+                      in <strong>{selectedCategory}</strong>{" "}
+                      <span style={{ opacity: 0.85 }}>
+                        (of {totalInSelectedCategory} in category)
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -400,69 +513,89 @@ export default function ChallengesPage() {
                 gap: 12,
               }}
             >
-              {challenges.map((c) => {
-                const isDone = Boolean(completedById[c.id]);
-                return (
-                  <div key={c.id} className="card">
-                    <div className="card-body" style={{ display: "grid", gap: 10 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 12,
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <div style={{ display: "grid", gap: 4 }}>
-                          <div className="muted" style={{ fontWeight: 700 }}>
-                            {c.skill} • {c.xp} XP
-                          </div>
-                          <div style={{ fontSize: 18, fontWeight: 900 }}>
-                            {c.title}
-                          </div>
-                        </div>
-
-                        <div
-                          style={{
-                            fontWeight: 800,
-                            fontSize: 12,
-                            padding: "6px 10px",
-                            borderRadius: 999,
-                            border: "1px solid var(--color-border)",
-                            background: isDone
-                              ? "rgba(5, 150, 105, 0.10)"
-                              : "rgba(55, 65, 81, 0.06)",
-                            color: isDone
-                              ? "var(--color-success)"
-                              : "var(--color-text)",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {isDone ? "Completed" : "New"}
-                        </div>
-                      </div>
-
-                      <div className="muted">{c.description}</div>
-
-                      <div className="muted" style={{ fontSize: 13 }}>
-                        Questions:{" "}
-                        <span style={{ fontWeight: 800, color: "var(--color-text)" }}>
-                          {c.questions.length}
-                        </span>
-                      </div>
-
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => startAttempt(c.id)}
-                        >
-                          {isDone ? "Retry challenge" : "Start challenge"}
-                        </button>
-                      </div>
+              {filteredChallenges.length === 0 ? (
+                <div
+                  className="card"
+                  style={{
+                    gridColumn: "1 / -1",
+                    border: "1px solid rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <div className="card-body" style={{ display: "grid", gap: 8 }}>
+                    <div className="h3" style={{ margin: 0 }}>
+                      No challenges found
+                    </div>
+                    <div className="muted">
+                      There are currently no challenges in the "{selectedCategory}"
+                      category.
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ) : (
+                filteredChallenges.map((c) => {
+                  const isDone = Boolean(completedById[c.id]);
+                  return (
+                    <div key={c.id} className="card">
+                      <div className="card-body" style={{ display: "grid", gap: 10 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 12,
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          <div style={{ display: "grid", gap: 4 }}>
+                            <div className="muted" style={{ fontWeight: 700 }}>
+                              {c.skill} • {c.xp} XP
+                            </div>
+                            <div style={{ fontSize: 18, fontWeight: 900 }}>
+                              {c.title}
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              fontWeight: 800,
+                              fontSize: 12,
+                              padding: "6px 10px",
+                              borderRadius: 999,
+                              border: "1px solid var(--color-border)",
+                              background: isDone
+                                ? "rgba(5, 150, 105, 0.10)"
+                                : "rgba(55, 65, 81, 0.06)",
+                              color: isDone
+                                ? "var(--color-success)"
+                                : "var(--color-text)",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {isDone ? "Completed" : "New"}
+                          </div>
+                        </div>
+
+                        <div className="muted">{c.description}</div>
+
+                        <div className="muted" style={{ fontSize: 13 }}>
+                          Questions:{" "}
+                          <span style={{ fontWeight: 800, color: "var(--color-text)" }}>
+                            {c.questions.length}
+                          </span>
+                        </div>
+
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => startAttempt(c.id)}
+                          >
+                            {isDone ? "Retry challenge" : "Start challenge"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             <style>
