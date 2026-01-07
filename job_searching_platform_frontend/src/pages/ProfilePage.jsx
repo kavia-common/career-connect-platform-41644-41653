@@ -20,7 +20,6 @@ export default function ProfilePage() {
       headline: "",
       location: "",
       phone: "",
-      website: "",
       summary: "",
       skills: [], // array of strings
       links: {
@@ -43,12 +42,20 @@ export default function ProfilePage() {
   useEffect(() => {
     const stored = loadProfile();
     if (stored) {
+      // Remove deprecated fields from older stored profiles.
+      // This keeps storage forward-compatible and avoids persisting removed fields.
+      // eslint-disable-next-line no-unused-vars
+      const { website, ...storedWithoutWebsite } = stored;
+
       // Merge defaults + stored to keep forward-compatible shape.
       setProfile((prev) => ({
         ...prev,
-        ...stored,
-        links: { ...prev.links, ...(stored.links || {}) },
-        preferences: { ...prev.preferences, ...(stored.preferences || {}) },
+        ...storedWithoutWebsite,
+        links: { ...prev.links, ...(storedWithoutWebsite.links || {}) },
+        preferences: {
+          ...prev.preferences,
+          ...(storedWithoutWebsite.preferences || {}),
+        },
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -212,20 +219,7 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  <div className="form-row" style={{ marginBottom: 0 }}>
-                    <label className="label" htmlFor="website">
-                      Website
-                    </label>
-                    <input
-                      id="website"
-                      name="website"
-                      className="input"
-                      placeholder="https://..."
-                      value={profile.website || ""}
-                      onChange={onChange}
-                      autoComplete="url"
-                    />
-                  </div>
+
                 </div>
 
                 <div className="form-row">

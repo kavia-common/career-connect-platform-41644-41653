@@ -1,6 +1,9 @@
 /**
  * Utilities for persisting the user's profile locally.
  * Note: This is a temporary persistence layer. Can be swapped to Supabase later.
+ *
+ * The profile shape may evolve over time; callers should avoid relying on removed fields
+ * (e.g., the deprecated `website` field).
  */
 
 const STORAGE_KEY = "talenvia.profile.v1";
