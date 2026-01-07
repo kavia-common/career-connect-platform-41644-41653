@@ -38,6 +38,20 @@ Add a minimal global store for auth:
 
 ## 2) Environment configuration
 
+### 2.0 Configure Supabase (CRA env vars)
+
+Supabase Auth is used by the frontend. Configure these environment variables (preferred CRA names):
+
+- `REACT_APP_SUPABASE_URL`
+- `REACT_APP_SUPABASE_KEY` (anon/public key)
+
+Supported legacy fallbacks (prefer not to use in CRA deployments):
+
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+
+The app will warn (non-production) if Supabase config is missing.
+
 ### 2.1 Use REACT_APP_API_BASE consistently
 
 In `src/services/httpClient.js`, define:
