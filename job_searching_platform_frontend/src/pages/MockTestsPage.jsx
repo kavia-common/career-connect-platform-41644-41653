@@ -40,22 +40,36 @@ export default function MockTestsPage() {
   }, [progressByTestId]);
 
   const allCategories = useMemo(() => {
-    // Prefer curated export, but keep it resilient if dataset changes.
+    /**
+     * We want the dropdown to show:
+     * All, React, Java, Python, then any remaining categories alphabetically.
+     *
+     * We still keep this resilient:
+     * - Prefer `mockTestCategories` if provided
+     * - Fall back to deriving from dataset
+     */
     const derived = Array.from(
       new Set(mockTests.map((t) => t.category).filter(Boolean))
     ).sort((a, b) => a.localeCompare(b));
 
-    const fromExport = Array.isArray(mockTestCategories) ? mockTestCategories : derived;
+    const fromExport = Array.isArray(mockTestCategories)
+      ? mockTestCategories
+      : derived;
 
-    // Remove "All" (we no longer provide an aggregated category view).
-    const normalized = Array.from(new Set(fromExport.filter(Boolean))).filter(
-      (c) => c !== "All"
-    );
+    const unique = Array.from(new Set(fromExport.filter(Boolean)));
 
-    // Always ensure we have some categories (fallback to derived dataset).
-    if (normalized.length === 0) return derived;
+    const PRIORITY = ["All", "React", "Java", "Python"];
+    const prioritySet = new Set(PRIORITY);
 
-    return normalized;
+    const prioritized = PRIORITY.filter((c) => unique.includes(c));
+    const rest = unique
+      .filter((c) => !prioritySet.has(c))
+      .sort((a, b) => a.localeCompare(b));
+
+    // Ensure "All" exists even if export/data drifted (so filter still supports All view).
+    if (!prioritized.includes("All")) prioritized.unshift("All");
+
+    return [...prioritized, ...rest];
   }, []);
 
   // When categories are available, ensure we always have an active category selected.
@@ -88,11 +102,12 @@ export default function MockTestsPage() {
   }, []);
 
   const filteredTests = useMemo(() => {
-    // Category is required for browsing; if not available yet, show none.
-    if (!selectedCategory) return [];
+    // With "All", category is optional. If not set yet, show all.
+    if (!selectedCategory) return mockTests;
 
     return mockTests.filter((t) => {
-      const matchesCategory = t.category === selectedCategory;
+      const matchesCategory =
+        selectedCategory === "All" ? true : t.category === selectedCategory;
 
       const matchesDifficulty =
         !selectedDifficulty || selectedDifficulty === "All"
@@ -412,14 +427,11 @@ function FiltersPanel({
                 value={selectedCategory}
                 onChange={(e) => onSelectCategory(e.target.value)}
               >
-                {categories.map((cat) => {
-                  const count = countsByCategory[cat] ?? 0;
-                  return (
-                    <option key={cat} value={cat}>
-                      {cat} ({count})
-                    </option>
-                  );
-                })}
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
             </div>
 
