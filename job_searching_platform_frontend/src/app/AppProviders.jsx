@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "../state/authStore";
 import { NotificationsProvider } from "../state/notificationsStore";
+import { useRealtimeNotifications } from "../hooks/useRealtimeNotifications";
 
 function createQueryClient() {
   return new QueryClient({
@@ -16,6 +17,14 @@ function createQueryClient() {
       },
     },
   });
+}
+
+/**
+ * Hook runner mounted inside providers so it can read auth + notifications context.
+ */
+function RealtimeNotificationsBridge() {
+  useRealtimeNotifications();
+  return null;
 }
 
 /**
@@ -35,7 +44,10 @@ export default function AppProviders({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <NotificationsProvider>{children}</NotificationsProvider>
+        <NotificationsProvider>
+          <RealtimeNotificationsBridge />
+          {children}
+        </NotificationsProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
