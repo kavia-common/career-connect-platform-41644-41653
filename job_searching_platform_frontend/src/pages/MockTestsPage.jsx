@@ -449,20 +449,11 @@ function FiltersPanel({
                 value={selectedDifficulty}
                 onChange={(e) => onSelectDifficulty(e.target.value)}
               >
-                {difficulties.map((diff) => {
-                  const count =
-                    diff === "All"
-                      ? allInSelectedCategoryForDifficulty
-                      : (countsByDifficultyInSelectedCategory[diff] ??
-                        countsByDifficulty[diff] ??
-                        0);
-
-                  return (
-                    <option key={diff} value={diff}>
-                      {diff} ({count})
-                    </option>
-                  );
-                })}
+                {difficulties.map((diff) => (
+                  <option key={diff} value={diff}>
+                    {diff}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
