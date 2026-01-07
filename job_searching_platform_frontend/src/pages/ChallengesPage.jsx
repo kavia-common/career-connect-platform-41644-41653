@@ -99,7 +99,7 @@ export default function ChallengesPage() {
     );
 
     return [...prioritized, ...rest];
-  }, []);
+  }, [challenges]);
 
   // Keep selected category valid if dataset changes.
   useEffect(() => {
