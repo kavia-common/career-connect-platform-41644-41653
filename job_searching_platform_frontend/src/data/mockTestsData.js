@@ -17,7 +17,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 1,
-    title: "React Fundamentals",
+    title: "Fundamentals",
     category: "React",
     difficulty: "Easy",
     skill: "React",
@@ -138,7 +138,7 @@ export const mockTests = [
   },
   {
     id: 2,
-    title: "React State & Effects",
+    title: "State & Effects",
     category: "React",
     difficulty: "Medium",
     skill: "React",
@@ -283,7 +283,7 @@ export const mockTests = [
   },
   {
     id: 9,
-    title: "React Performance & Rendering",
+    title: "Performance & Rendering",
     category: "React",
     difficulty: "Hard",
     skill: "React",
@@ -420,7 +420,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 3,
-    title: "JavaScript Essentials",
+    title: "Essentials",
     category: "JavaScript",
     difficulty: "Easy",
     skill: "JavaScript",
@@ -687,7 +687,7 @@ export const mockTests = [
   },
   {
     id: 10,
-    title: "JavaScript Async Patterns",
+    title: "Async Patterns",
     category: "JavaScript",
     difficulty: "Hard",
     skill: "JavaScript",
@@ -827,7 +827,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 5,
-    title: "HTML & CSS Fundamentals",
+    title: "Fundamentals",
     category: "HTML/CSS",
     difficulty: "Easy",
     skill: "HTML/CSS",
@@ -938,7 +938,7 @@ export const mockTests = [
   },
   {
     id: 6,
-    title: "Responsive Layouts (CSS)",
+    title: "Responsive Layouts",
     category: "HTML/CSS",
     difficulty: "Medium",
     skill: "HTML/CSS",
@@ -1073,7 +1073,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 7,
-    title: "Node.js Basics",
+    title: "Basics",
     category: "Node.js",
     difficulty: "Easy",
     skill: "Node.js",
@@ -1189,7 +1189,7 @@ export const mockTests = [
   },
   {
     id: 8,
-    title: "Node.js APIs & HTTP",
+    title: "APIs & HTTP",
     category: "Node.js",
     difficulty: "Hard",
     skill: "Node.js",
@@ -1309,7 +1309,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 11,
-    title: "Java Basics",
+    title: "Basics",
     category: "Java",
     difficulty: "Easy",
     skill: "Java",
@@ -1415,7 +1415,7 @@ export const mockTests = [
   },
   {
     id: 12,
-    title: "Java OOP & Collections",
+    title: "OOP & Collections",
     category: "Java",
     difficulty: "Medium",
     skill: "Java",
@@ -1525,7 +1525,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 13,
-    title: "Python Fundamentals",
+    title: "Fundamentals",
     category: "Python",
     difficulty: "Easy",
     skill: "Python",
@@ -1636,7 +1636,7 @@ export const mockTests = [
   },
   {
     id: 14,
-    title: "Python Data Structures & Comprehensions",
+    title: "Data Structures & Comprehensions",
     category: "Python",
     difficulty: "Medium",
     skill: "Python",
@@ -1771,7 +1771,7 @@ export const mockTests = [
   // -----------------------------
   {
     id: 15,
-    title: "Machine Learning Basics",
+    title: "Basics",
     category: "Machine Learning",
     difficulty: "Easy",
     skill: "Machine Learning",
@@ -1902,7 +1902,7 @@ export const mockTests = [
   },
   {
     id: 16,
-    title: "Model Evaluation & Metrics",
+    title: "Evaluation & Metrics",
     category: "Machine Learning",
     difficulty: "Medium",
     skill: "Machine Learning",

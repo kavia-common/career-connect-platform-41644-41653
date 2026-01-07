@@ -347,10 +347,18 @@ function countAnswered(test, progress) {
 
 function getDifficultyBadgeStyle(difficulty) {
   // Keep within the current theme by using subtle tinted backgrounds (no new CSS needed).
-  if (difficulty === "Easy") return { background: "rgba(5, 150, 105, 0.10)", color: "#065F46" };
-  if (difficulty === "Medium") return { background: "rgba(55, 65, 81, 0.10)", color: "#374151" };
-  if (difficulty === "Hard") return { background: "rgba(220, 38, 38, 0.10)", color: "#991B1B" };
+  if (difficulty === "Easy")
+    return { background: "rgba(5, 150, 105, 0.10)", color: "#065F46" };
+  if (difficulty === "Medium")
+    return { background: "rgba(55, 65, 81, 0.10)", color: "#374151" };
+  if (difficulty === "Hard")
+    return { background: "rgba(220, 38, 38, 0.10)", color: "#991B1B" };
   return undefined;
+}
+
+function getCategoryBadgeStyle(category) {
+  // Slightly tinted neutral badge for category; keep inline to avoid global CSS changes.
+  return { background: "rgba(55, 65, 81, 0.08)", color: "#374151" };
 }
 
 function FiltersPanel({
@@ -557,14 +565,24 @@ function TestsList({
                           <div className="h3" style={{ margin: 0 }}>
                             {t.title}
                           </div>
-                          <span className="badge">{t.category || t.skill}</span>
+
+                          {t.category || t.skill ? (
+                            <span
+                              className="badge"
+                              style={getCategoryBadgeStyle(t.category || t.skill)}
+                              title={`Category: ${t.category || t.skill}`}
+                            >
+                              Category: {t.category || t.skill}
+                            </span>
+                          ) : null}
+
                           {t.difficulty ? (
                             <span
                               className="badge"
                               style={getDifficultyBadgeStyle(t.difficulty)}
                               title={`Difficulty: ${t.difficulty}`}
                             >
-                              {t.difficulty}
+                              Difficulty: {t.difficulty}
                             </span>
                           ) : null}
                         </div>
@@ -673,13 +691,30 @@ function TestRunner({
             <div className="h2" style={{ margin: 0 }}>
               {test.title}
             </div>
-            <div className="muted" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <span className="badge">{test.category || test.skill}</span>
-              {test.difficulty ? (
-                <span className="badge" style={getDifficultyBadgeStyle(test.difficulty)}>
-                  {test.difficulty}
+            <div
+              className="muted"
+              style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}
+            >
+              {test.category || test.skill ? (
+                <span
+                  className="badge"
+                  style={getCategoryBadgeStyle(test.category || test.skill)}
+                  title={`Category: ${test.category || test.skill}`}
+                >
+                  Category: {test.category || test.skill}
                 </span>
               ) : null}
+
+              {test.difficulty ? (
+                <span
+                  className="badge"
+                  style={getDifficultyBadgeStyle(test.difficulty)}
+                  title={`Difficulty: ${test.difficulty}`}
+                >
+                  Difficulty: {test.difficulty}
+                </span>
+              ) : null}
+
               <span>{total} questions</span>
               <span>•</span>
               <span>{test.duration}</span>
