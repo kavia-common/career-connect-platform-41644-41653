@@ -21,7 +21,7 @@ export const mockTests = [
     category: "React",
     difficulty: "Easy",
     skill: "React",
-    totalQuestions: 5,
+    totalQuestions: 10,
     duration: "10 mins",
     questions: [
       {
@@ -79,6 +79,61 @@ export const mockTests = [
         explanation:
           "React was created at Facebook (now Meta) and open-sourced in 2013.",
       },
+      {
+        id: 6,
+        question: "What is a React component?",
+        options: [
+          "A database table",
+          "A reusable piece of UI",
+          "A CSS class",
+          "A server endpoint",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Components are reusable building blocks that describe what should appear on the screen for a given state/props.",
+      },
+      {
+        id: 7,
+        question: "What is the correct way to pass data from parent to child?",
+        options: ["State", "Props", "Refs only", "Context only"],
+        correctAnswer: 1,
+        explanation:
+          "Props are the primary way to pass data from a parent component to a child component.",
+      },
+      {
+        id: 8,
+        question: "Which prop is required when rendering a list of elements?",
+        options: ["ref", "className", "key", "style"],
+        correctAnswer: 2,
+        explanation:
+          "The key prop helps React efficiently reconcile list items between renders.",
+      },
+      {
+        id: 9,
+        question: "What does setState (or a state setter) trigger?",
+        options: [
+          "A full page reload",
+          "A component re-render (with updated state)",
+          "A network request automatically",
+          "A CSS recalculation only",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Updating state schedules React to re-render the component so the UI reflects the new state.",
+      },
+      {
+        id: 10,
+        question: "What is a common way to handle user input in React?",
+        options: [
+          "Only by reading the DOM directly",
+          "Controlled components using state and onChange",
+          "By modifying HTML strings",
+          "By using setTimeout",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Controlled components store input values in state and update them via event handlers like onChange.",
+      },
     ],
   },
   {
@@ -87,7 +142,7 @@ export const mockTests = [
     category: "React",
     difficulty: "Medium",
     skill: "React",
-    totalQuestions: 6,
+    totalQuestions: 11,
     duration: "12 mins",
     questions: [
       {
@@ -164,6 +219,66 @@ export const mockTests = [
         explanation:
           "React may batch state updates for performance; you should not assume setState is applied immediately.",
       },
+      {
+        id: 7,
+        question: "What is the purpose of the dependency array in useEffect?",
+        options: [
+          "It determines which components can import the hook",
+          "It lists values that trigger the effect to re-run when they change",
+          "It enables server-side rendering",
+          "It prevents state updates",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Dependencies tell React when the effect should re-run; React compares them between renders to decide whether to re-execute the effect.",
+      },
+      {
+        id: 8,
+        question: "What does useRef commonly provide?",
+        options: [
+          "A way to force re-renders",
+          "A mutable value that persists across renders (often used for DOM refs)",
+          "A replacement for useState",
+          "An automatic memoization of objects",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "useRef returns a stable object whose .current value can be mutated without triggering re-renders, often used for DOM references or storing instance-like values.",
+      },
+      {
+        id: 9,
+        question: "Which is true about derived state?",
+        options: [
+          "It should always be duplicated into component state",
+          "It can often be computed from props/state during render instead of stored",
+          "It requires useEffect to update",
+          "It must be stored in context",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "If a value can be computed from existing props/state, it’s often better to compute it during render to avoid inconsistencies.",
+      },
+      {
+        id: 10,
+        question: "In React, what is a controlled input?",
+        options: [
+          "An input that can't be edited",
+          "An input where the value is driven by React state",
+          "An input controlled by the browser only",
+          "An input that uses refs exclusively",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Controlled inputs have their value tied to React state and update via onChange handlers, making state the single source of truth.",
+      },
+      {
+        id: 11,
+        question: "Which hook is best for complex state transitions based on actions?",
+        options: ["useState", "useMemo", "useReducer", "useLayoutEffect"],
+        correctAnswer: 2,
+        explanation:
+          "useReducer is a good fit when state logic is complex or when state transitions are easier to describe as actions.",
+      },
     ],
   },
   {
@@ -172,7 +287,7 @@ export const mockTests = [
     category: "React",
     difficulty: "Hard",
     skill: "React",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -245,6 +360,58 @@ export const mockTests = [
         explanation:
           "Transitions allow you to mark updates as non-urgent so React can keep the UI responsive by prioritizing more important updates.",
       },
+      {
+        id: 7,
+        question: "What problem can excessive context usage cause?",
+        options: [
+          "Context can't be used in function components",
+          "Any context value change can re-render many consumers",
+          "Context automatically memoizes all values",
+          "Context only works with class components",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "When a context value changes, all consuming components may re-render; splitting context or memoizing values can reduce unnecessary renders.",
+      },
+      {
+        id: 8,
+        question: "Which approach can reduce bundle size in React apps?",
+        options: [
+          "Always using inline styles",
+          "Code splitting with dynamic import/lazy loading",
+          "Replacing props with context",
+          "Using more dependencies",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Code splitting loads code on-demand (e.g., React.lazy + Suspense), reducing initial bundle size and improving load performance.",
+      },
+      {
+        id: 9,
+        question: "Why can using array index as a key be problematic?",
+        options: [
+          "It breaks JSX compilation",
+          "It can cause incorrect state/DOM associations when list order changes",
+          "It makes React render slower in all cases",
+          "It prevents using fragments",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "If items are inserted/removed/reordered, index keys can make React reuse DOM nodes incorrectly, leading to bugs like inputs keeping wrong values.",
+      },
+      {
+        id: 10,
+        question: "Which tool helps you find unnecessary renders in development?",
+        options: [
+          "React Router",
+          "React DevTools Profiler",
+          "Babel",
+          "ESLint only",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "React DevTools Profiler lets you record commits and see which components rendered and why, helping diagnose performance issues.",
+      },
     ],
   },
 
@@ -257,7 +424,7 @@ export const mockTests = [
     category: "JavaScript",
     difficulty: "Easy",
     skill: "JavaScript",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -297,7 +464,12 @@ export const mockTests = [
       {
         id: 4,
         question: "What does Array.prototype.map return?",
-        options: ["A single value", "A new array", "The original array mutated", "A boolean"],
+        options: [
+          "A single value",
+          "A new array",
+          "The original array mutated",
+          "A boolean",
+        ],
         correctAnswer: 1,
         explanation:
           "map returns a new array containing the result of applying the callback to each element (it does not mutate the original array).",
@@ -328,6 +500,48 @@ export const mockTests = [
         explanation:
           "A Promise represents a value that may be available now, later, or never, and provides then/catch/finally for handling outcomes.",
       },
+      {
+        id: 7,
+        question: "Which value is falsy in JavaScript?",
+        options: ["'0'", "[]", "0", "{}"],
+        correctAnswer: 2,
+        explanation:
+          "0 is falsy. Strings like '0', arrays [], and objects {} are truthy.",
+      },
+      {
+        id: 8,
+        question: "What is the scope of a variable declared with let?",
+        options: [
+          "Function scope only",
+          "Block scope",
+          "Global scope only",
+          "Module scope only",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "let is block-scoped, meaning it exists only within the nearest enclosing { } block.",
+      },
+      {
+        id: 9,
+        question: "What does '===' do compared to '=='?",
+        options: [
+          "Performs type coercion before comparing",
+          "Compares both value and type without coercion",
+          "Only compares object references",
+          "Only compares numbers",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "=== is strict equality: it compares both type and value without coercion (unlike ==).",
+      },
+      {
+        id: 10,
+        question: "Which built-in method removes the last element from an array?",
+        options: ["shift()", "pop()", "push()", "unshift()"],
+        correctAnswer: 1,
+        explanation:
+          "pop() removes and returns the last element of an array (it mutates the array).",
+      },
     ],
   },
   {
@@ -336,7 +550,7 @@ export const mockTests = [
     category: "JavaScript",
     difficulty: "Medium",
     skill: "JavaScript",
-    totalQuestions: 5,
+    totalQuestions: 10,
     duration: "10 mins",
     questions: [
       {
@@ -404,6 +618,71 @@ export const mockTests = [
         explanation:
           "Optional chaining short-circuits and returns undefined instead of throwing when accessing properties on null/undefined.",
       },
+      {
+        id: 6,
+        question: "What is a default parameter in JavaScript?",
+        options: [
+          "A parameter that must be provided",
+          "A parameter with a fallback value if undefined is passed",
+          "A parameter only for arrow functions",
+          "A parameter that converts types automatically",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Default parameters allow a function parameter to have a default value when the argument is missing or undefined.",
+      },
+      {
+        id: 7,
+        question: "What is a template literal?",
+        options: [
+          "A string that cannot contain variables",
+          "A string delimited by backticks that supports interpolation",
+          "A JSON string format",
+          "A CSS selector syntax",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Template literals use backticks (`) and support ${expression} interpolation and multi-line strings.",
+      },
+      {
+        id: 8,
+        question: "What does Array.prototype.find return?",
+        options: [
+          "An array of all matches",
+          "The first element that matches the predicate (or undefined)",
+          "The index of the first match",
+          "A boolean",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "find returns the first matching element; use findIndex to get the index instead.",
+      },
+      {
+        id: 9,
+        question: "What does 'import'/'export' provide in JavaScript?",
+        options: [
+          "A browser-only API for fetching",
+          "An ES module system for sharing code between files",
+          "A replacement for JSON.parse",
+          "A way to define CSS modules",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "ES modules use import/export for modular code organization and dependency management.",
+      },
+      {
+        id: 10,
+        question: "What is the purpose of the rest parameter (...args)?",
+        options: [
+          "To expand an array into arguments",
+          "To collect remaining arguments into an array",
+          "To stop a loop early",
+          "To declare optional chaining",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Rest parameters collect remaining arguments into an array, e.g., function f(...args) { }.",
+      },
     ],
   },
   {
@@ -412,7 +691,7 @@ export const mockTests = [
     category: "JavaScript",
     difficulty: "Hard",
     skill: "JavaScript",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -488,6 +767,58 @@ export const mockTests = [
         explanation:
           "Microtasks (like Promise callbacks) run after the current call stack completes but before the next macrotask (like setTimeout).",
       },
+      {
+        id: 7,
+        question: "What does Promise.race do?",
+        options: [
+          "Waits for all promises to settle",
+          "Settles as soon as the first input promise settles (resolve or reject)",
+          "Always resolves with the fastest resolved promise",
+          "Retries promises until one resolves",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Promise.race settles as soon as any input promise settles, whether resolved or rejected.",
+      },
+      {
+        id: 8,
+        question: "What is a microtask in JavaScript?",
+        options: [
+          "A callback scheduled with setTimeout",
+          "A Promise callback scheduled to run before the next macrotask",
+          "A DOM repaint",
+          "A synchronous function call",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Promise then/catch callbacks are microtasks; they run after the current stack but before timers and I/O macrotasks.",
+      },
+      {
+        id: 9,
+        question: "Why might you use a concurrency limit for async tasks?",
+        options: [
+          "To make all tasks synchronous",
+          "To avoid overwhelming network/CPU resources",
+          "To disable the event loop",
+          "To ensure tasks run in random order",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Limiting concurrency can prevent spikes in resource usage (e.g., too many simultaneous requests) and improve stability.",
+      },
+      {
+        id: 10,
+        question: "What does 'await' do when used on a Promise?",
+        options: [
+          "Converts the promise into a callback",
+          "Pauses execution in the async function until the promise settles",
+          "Blocks the entire JavaScript thread",
+          "Automatically retries on failure",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "await pauses within the async function until the promise resolves/rejects; it does not block the entire event loop.",
+      },
     ],
   },
 
@@ -500,7 +831,7 @@ export const mockTests = [
     category: "HTML/CSS",
     difficulty: "Easy",
     skill: "HTML/CSS",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -561,6 +892,48 @@ export const mockTests = [
         explanation:
           "rem is relative to the root element’s font-size (usually <html>), while em is relative to the current element’s font-size.",
       },
+      {
+        id: 7,
+        question: "Which HTML attribute provides alternative text for images?",
+        options: ["title", "alt", "src", "href"],
+        correctAnswer: 1,
+        explanation:
+          "alt provides alternative text for images, important for accessibility and when images fail to load.",
+      },
+      {
+        id: 8,
+        question: "What does CSS stand for?",
+        options: [
+          "Computer Style Sheets",
+          "Cascading Style Sheets",
+          "Creative Styling System",
+          "Colorful Style Syntax",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "CSS stands for Cascading Style Sheets and controls presentation and layout for HTML documents.",
+      },
+      {
+        id: 9,
+        question: "Which selector targets an element by id?",
+        options: [".myId", "#myId", "myId", "@myId"],
+        correctAnswer: 1,
+        explanation:
+          "In CSS, #id targets a specific element with that id attribute value.",
+      },
+      {
+        id: 10,
+        question: "What does 'margin' do in CSS?",
+        options: [
+          "Adds space inside the border",
+          "Adds space outside the border",
+          "Changes font size",
+          "Sets element opacity",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Margin controls the space outside an element’s border, creating separation from neighboring elements.",
+      },
     ],
   },
   {
@@ -569,7 +942,7 @@ export const mockTests = [
     category: "HTML/CSS",
     difficulty: "Medium",
     skill: "HTML/CSS",
-    totalQuestions: 5,
+    totalQuestions: 10,
     duration: "10 mins",
     questions: [
       {
@@ -632,6 +1005,66 @@ export const mockTests = [
         explanation:
           "Readable contrast improves accessibility. Also avoid relying on color alone to convey important meaning.",
       },
+      {
+        id: 6,
+        question: "What does 'max-width: 100%' on an image help with?",
+        options: [
+          "Forcing it to always be 100px wide",
+          "Preventing it from overflowing its container",
+          "Increasing image resolution",
+          "Disabling responsiveness",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "max-width: 100% makes images scale down to fit within their container, improving responsive behavior.",
+      },
+      {
+        id: 7,
+        question: "Which media query is typical for applying styles to screens wider than 768px?",
+        options: [
+          "@media (max-width: 768px)",
+          "@media (min-width: 768px)",
+          "@media (device-width: 768px)",
+          "@media (aspect-ratio: 768px)",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "min-width targets viewports at least that wide (often used in mobile-first designs).",
+      },
+      {
+        id: 8,
+        question: "In CSS Grid, what does 'grid-template-columns: repeat(3, 1fr)' mean?",
+        options: [
+          "3 rows each 1fr tall",
+          "3 columns each taking an equal fraction of available space",
+          "3 columns each 1px wide",
+          "3 columns that auto-size to content only",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "repeat(3, 1fr) creates three equal-width columns using fractional units.",
+      },
+      {
+        id: 9,
+        question: "Which property helps align items vertically in a flex row (cross axis)?",
+        options: ["align-items", "justify-content", "flex-wrap", "gap"],
+        correctAnswer: 0,
+        explanation:
+          "align-items controls alignment along the cross axis (vertical alignment when flex-direction is row).",
+      },
+      {
+        id: 10,
+        question: "What is a breakpoint in responsive design?",
+        options: [
+          "A JavaScript error",
+          "A point where layout changes based on viewport size",
+          "A CSS variable",
+          "A device-specific font",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "A breakpoint is a screen width (or other condition) where you adjust layout/styles to improve usability across devices.",
+      },
     ],
   },
 
@@ -644,7 +1077,7 @@ export const mockTests = [
     category: "Node.js",
     difficulty: "Easy",
     skill: "Node.js",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -705,6 +1138,53 @@ export const mockTests = [
         explanation:
           "In Node.js, environment variables are accessible through process.env.",
       },
+      {
+        id: 7,
+        question: "Which built-in module is used for creating an HTTP server?",
+        options: ["http", "net", "url", "crypto"],
+        correctAnswer: 0,
+        explanation:
+          "Node's http module provides createServer and related APIs to handle HTTP requests and responses.",
+      },
+      {
+        id: 8,
+        question: "What does 'non-blocking I/O' mean?",
+        options: [
+          "I/O always runs on the main thread",
+          "I/O operations do not stop other code from executing while waiting",
+          "I/O never fails",
+          "I/O is always synchronous",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Non-blocking I/O allows Node to continue processing other work while waiting for I/O operations to complete.",
+      },
+      {
+        id: 9,
+        question: "Which is a typical use case for Node.js?",
+        options: [
+          "Building static images",
+          "Building scalable network applications (APIs, real-time services)",
+          "Only running SQL queries",
+          "Rendering CSS animations",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Node.js is commonly used for APIs, web servers, real-time apps, and tooling due to its event-driven model.",
+      },
+      {
+        id: 10,
+        question: "What does 'package.json' primarily define?",
+        options: [
+          "HTML layout of the app",
+          "Project metadata, scripts, and dependencies",
+          "Database schema",
+          "Operating system configuration",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "package.json defines a Node project's metadata, dependencies, and runnable scripts.",
+      },
     ],
   },
   {
@@ -713,7 +1193,7 @@ export const mockTests = [
     category: "Node.js",
     difficulty: "Hard",
     skill: "Node.js",
-    totalQuestions: 5,
+    totalQuestions: 10,
     duration: "10 mins",
     questions: [
       {
@@ -766,6 +1246,61 @@ export const mockTests = [
         explanation:
           "Bearer tokens are typically sent in the Authorization header, e.g., Authorization: Bearer <token>.",
       },
+      {
+        id: 6,
+        question: "What is idempotency in HTTP?",
+        options: [
+          "A request that always returns JSON",
+          "A request that can be repeated with the same effect on the server",
+          "A request that must be encrypted",
+          "A request that always creates a new resource",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Idempotent methods (like GET, PUT, DELETE in typical REST semantics) can be repeated without additional side effects beyond the first call.",
+      },
+      {
+        id: 7,
+        question: "Which status code means 'Not Found'?",
+        options: ["401", "403", "404", "500"],
+        correctAnswer: 2,
+        explanation:
+          "404 Not Found indicates the server cannot find the requested resource.",
+      },
+      {
+        id: 8,
+        question: "What does CORS control?",
+        options: [
+          "How CSS is loaded",
+          "Which origins are allowed to make cross-origin requests",
+          "How cookies are encrypted",
+          "How Node schedules microtasks",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "CORS is a browser security feature that controls cross-origin requests; servers send headers to indicate allowed origins/methods/headers.",
+      },
+      {
+        id: 9,
+        question: "Which method is commonly used to partially update a resource in REST?",
+        options: ["GET", "POST", "PATCH", "HEAD"],
+        correctAnswer: 2,
+        explanation:
+          "PATCH is commonly used for partial updates, whereas PUT typically represents full replacement of a resource.",
+      },
+      {
+        id: 10,
+        question: "What does 'Content-Type: application/json' indicate?",
+        options: [
+          "Response is HTML",
+          "Body is JSON formatted",
+          "Request uses cookies",
+          "Connection is HTTP/2",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Content-Type describes the media type of the message body; application/json means the payload is JSON.",
+      },
     ],
   },
 
@@ -778,7 +1313,7 @@ export const mockTests = [
     category: "Java",
     difficulty: "Easy",
     skill: "Java",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -844,6 +1379,38 @@ export const mockTests = [
         explanation:
           "The JVM looks for public static void main(String[] args) as the program entry point.",
       },
+      {
+        id: 7,
+        question: "Which access modifier makes a member visible only within the same class?",
+        options: ["public", "protected", "private", "default (package-private)"],
+        correctAnswer: 2,
+        explanation:
+          "private members are accessible only within the declaring class.",
+      },
+      {
+        id: 8,
+        question: "What does JVM stand for?",
+        options: ["Java Verified Modules", "Java Virtual Machine", "Java Visual Model", "Just Valid Memory"],
+        correctAnswer: 1,
+        explanation:
+          "JVM stands for Java Virtual Machine; it runs compiled Java bytecode.",
+      },
+      {
+        id: 9,
+        question: "Which keyword is used to create a subclass relationship?",
+        options: ["implements", "extends", "inherits", "super"],
+        correctAnswer: 1,
+        explanation:
+          "extends is used for class inheritance. implements is used to implement interfaces.",
+      },
+      {
+        id: 10,
+        question: "Which type is used to represent true/false values in Java?",
+        options: ["bool", "Boolean", "boolean", "bit"],
+        correctAnswer: 2,
+        explanation:
+          "boolean is the primitive type for true/false values (Boolean is the wrapper class).",
+      },
     ],
   },
   {
@@ -852,7 +1419,7 @@ export const mockTests = [
     category: "Java",
     difficulty: "Medium",
     skill: "Java",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -913,6 +1480,43 @@ export const mockTests = [
         explanation:
           "Polymorphism allows a reference of an interface/superclass type to point to different concrete implementations, enabling dynamic dispatch.",
       },
+      {
+        id: 7,
+        question: "Which collection maintains insertion order and allows duplicates?",
+        options: ["HashSet", "TreeSet", "ArrayList", "HashMap"],
+        correctAnswer: 2,
+        explanation:
+          "ArrayList is an ordered list implementation that preserves insertion order and allows duplicates.",
+      },
+      {
+        id: 8,
+        question: "What is the main difference between an interface and an abstract class (traditional view)?",
+        options: [
+          "Interfaces cannot have methods",
+          "Abstract classes cannot have fields",
+          "A class can implement multiple interfaces but extend only one class",
+          "Interfaces cannot be implemented by classes",
+        ],
+        correctAnswer: 2,
+        explanation:
+          "Java allows multiple interface implementations, but a class can extend only one superclass (abstract or concrete).",
+      },
+      {
+        id: 9,
+        question: "Which keyword is used to call a superclass constructor?",
+        options: ["this()", "super()", "base()", "parent()"],
+        correctAnswer: 1,
+        explanation:
+          "super() calls a superclass constructor (and must be the first statement in a constructor when used).",
+      },
+      {
+        id: 10,
+        question: "Which Map implementation keeps keys sorted?",
+        options: ["HashMap", "LinkedHashMap", "TreeMap", "WeakHashMap"],
+        correctAnswer: 2,
+        explanation:
+          "TreeMap stores keys in sorted order (based on natural ordering or a provided Comparator).",
+      },
     ],
   },
 
@@ -925,7 +1529,7 @@ export const mockTests = [
     category: "Python",
     difficulty: "Easy",
     skill: "Python",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -986,6 +1590,48 @@ export const mockTests = [
         explanation:
           "None is a singleton object representing the absence of a value (similar to null in other languages).",
       },
+      {
+        id: 7,
+        question: "Which statement about indentation in Python is correct?",
+        options: [
+          "Indentation is optional",
+          "Indentation defines code blocks",
+          "Indentation is only used in comments",
+          "Indentation affects variable names",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Python uses indentation (whitespace) to define blocks for control flow and function/class bodies.",
+      },
+      {
+        id: 8,
+        question: "What does 'pip' primarily do?",
+        options: [
+          "Runs Python code faster",
+          "Installs and manages Python packages",
+          "Compiles Python to C",
+          "Edits Python files",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "pip is Python’s package installer, used to install and manage third-party libraries.",
+      },
+      {
+        id: 9,
+        question: "What is the result of 3 // 2 in Python?",
+        options: ["1.5", "1", "2", "0"],
+        correctAnswer: 1,
+        explanation:
+          "// is floor division, so 3 // 2 equals 1.",
+      },
+      {
+        id: 10,
+        question: "Which built-in function returns the type of an object?",
+        options: ["typeof()", "type()", "class()", "gettype()"],
+        correctAnswer: 1,
+        explanation:
+          "type(obj) returns the object's type (e.g., <class 'int'>).",
+      },
     ],
   },
   {
@@ -994,7 +1640,7 @@ export const mockTests = [
     category: "Python",
     difficulty: "Medium",
     skill: "Python",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -1065,6 +1711,58 @@ export const mockTests = [
         explanation:
           "is checks whether two references point to the same object; == checks whether the values are equal.",
       },
+      {
+        id: 7,
+        question: "What does dict.get(key, default) do?",
+        options: [
+          "Always raises KeyError if key missing",
+          "Returns default if key missing instead of raising",
+          "Deletes a key if missing",
+          "Sorts dictionary keys",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "dict.get returns the value for key if present; otherwise it returns the provided default (or None if not provided).",
+      },
+      {
+        id: 8,
+        question: "What does a set primarily provide?",
+        options: [
+          "Ordered storage with duplicates",
+          "Unique elements and fast membership tests",
+          "Key-value pairs",
+          "Immutable sequences",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Sets store unique items and provide fast membership tests (e.g., x in my_set).",
+      },
+      {
+        id: 9,
+        question: "Which comprehension creates a dictionary?",
+        options: [
+          "[x for x in items]",
+          "{x for x in items}",
+          "{k: v for (k, v) in pairs}",
+          "(x for x in items)",
+        ],
+        correctAnswer: 2,
+        explanation:
+          "{k: v for ...} is a dict comprehension; {x for ...} is a set comprehension.",
+      },
+      {
+        id: 10,
+        question: "What does 'in' check when used with a dict (e.g., key in my_dict)?",
+        options: [
+          "Whether a value exists",
+          "Whether a key exists",
+          "Whether dict is non-empty",
+          "Whether dict is sorted",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "By default, 'in' checks dictionary keys (not values).",
+      },
     ],
   },
 
@@ -1077,7 +1775,7 @@ export const mockTests = [
     category: "Machine Learning",
     difficulty: "Easy",
     skill: "Machine Learning",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -1153,6 +1851,53 @@ export const mockTests = [
         explanation:
           "A test set simulates unseen data so you can estimate how well the model generalizes beyond the training data.",
       },
+      {
+        id: 7,
+        question: "Which is an unsupervised learning task?",
+        options: [
+          "Predicting salaries from resumes",
+          "Clustering customers into groups",
+          "Predicting spam emails",
+          "Predicting house prices",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Clustering is a typical unsupervised task because it discovers structure in unlabeled data.",
+      },
+      {
+        id: 8,
+        question: "What is a feature in machine learning?",
+        options: [
+          "The final prediction label",
+          "An input variable used to make predictions",
+          "A training epoch count",
+          "A loss function output only",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "A feature is an input attribute (variable) used by a model to make predictions.",
+      },
+      {
+        id: 9,
+        question: "What does 'bias' in the bias-variance tradeoff typically refer to?",
+        options: [
+          "Sensitivity to training data fluctuations",
+          "Error from overly simple assumptions (underfitting)",
+          "Number of features in the dataset",
+          "Only dataset sampling error",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "High bias usually indicates underfitting—your model is too simple and misses relevant patterns.",
+      },
+      {
+        id: 10,
+        question: "Which is a common normalization/scaling method?",
+        options: ["Standardization (z-score)", "Random shuffling", "One-hot encoding", "Bootstrapping only"],
+        correctAnswer: 0,
+        explanation:
+          "Standardization rescales features to mean 0 and standard deviation 1, often improving optimization for many models.",
+      },
     ],
   },
   {
@@ -1161,7 +1906,7 @@ export const mockTests = [
     category: "Machine Learning",
     difficulty: "Medium",
     skill: "Machine Learning",
-    totalQuestions: 6,
+    totalQuestions: 10,
     duration: "12 mins",
     questions: [
       {
@@ -1236,6 +1981,53 @@ export const mockTests = [
         correctAnswer: 1,
         explanation:
           "Data leakage occurs when information from outside the training data (often from the test set) inadvertently influences training, causing overly optimistic results.",
+      },
+      {
+        id: 7,
+        question: "What does a baseline model help you do?",
+        options: [
+          "Guarantee production readiness",
+          "Compare whether advanced models provide real improvement",
+          "Avoid splitting data",
+          "Eliminate bias completely",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "A baseline provides a reference point so you can measure whether more complex models actually improve performance.",
+      },
+      {
+        id: 8,
+        question: "What is the main goal of a validation set?",
+        options: [
+          "Train the final model weights only",
+          "Tune hyperparameters and select models",
+          "Replace the test set entirely",
+          "Increase training speed",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Validation data is typically used for model selection/hyperparameter tuning, while the test set is kept for final evaluation.",
+      },
+      {
+        id: 9,
+        question: "Which metric is common for regression problems?",
+        options: ["Mean Squared Error (MSE)", "F1-score", "Accuracy", "Confusion matrix"],
+        correctAnswer: 0,
+        explanation:
+          "MSE (and related metrics like MAE/RMSE) are commonly used to measure regression prediction error.",
+      },
+      {
+        id: 10,
+        question: "What does 'stratified' splitting help with in classification?",
+        options: [
+          "Sorting features alphabetically",
+          "Preserving class distribution across train/test splits",
+          "Removing outliers automatically",
+          "Ensuring features are normalized",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Stratified splits keep class proportions similar across splits, which is important when classes are imbalanced.",
       },
     ],
   },
