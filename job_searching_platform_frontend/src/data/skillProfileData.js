@@ -9,26 +9,63 @@
 
 /**
  * PUBLIC_INTERFACE
- * skillProfileData: in-memory skill-based profile for the Profile page.
+ * skillProfiles: in-memory list of skill-based profiles for the Profile page.
  *
- * Expected shape:
+ * Expected profile shape:
+ * - id (string)
  * - name (string)
  * - role (string)
  * - experience (string)
  * - skills ({ name: string, level: string }[])
  * - interests (string[])
  */
-export const skillProfileData = {
-  // TODO: Replace with the exact provided skillProfileData content from the user instructions.
-  // Keeping a sensible default structure so the UI is functional immediately.
-  name: "Alex Morgan",
-  role: "Software Engineer",
-  experience: "5+ years building web applications and scalable APIs.",
-  skills: [
-    { name: "React", level: "Advanced" },
-    { name: "JavaScript", level: "Advanced" },
-    { name: "Node.js", level: "Intermediate" },
-    { name: "SQL", level: "Intermediate" },
-  ],
-  interests: ["System design", "Performance optimization", "Mentoring", "Product thinking"],
-};
+export const skillProfiles = [
+  {
+    id: "bhoomika-t",
+    name: "Bhoomika T",
+    role: "Frontend Engineer",
+    experience: "3+ years building responsive web apps and design systems.",
+    skills: [
+      { name: "React", level: "Advanced" },
+      { name: "TypeScript", level: "Advanced" },
+      { name: "CSS / UI Engineering", level: "Advanced" },
+      { name: "Accessibility (a11y)", level: "Intermediate" },
+    ],
+    interests: ["Design systems", "Performance", "UX polish", "Mentoring"],
+  },
+  {
+    id: "samir-khan",
+    name: "Samir Khan",
+    role: "Backend Engineer",
+    experience: "6+ years designing scalable services, APIs, and data-intensive systems.",
+    skills: [
+      { name: "Node.js", level: "Advanced" },
+      { name: "Python", level: "Advanced" },
+      { name: "REST APIs", level: "Advanced" },
+      { name: "PostgreSQL", level: "Advanced" },
+      { name: "Docker", level: "Intermediate" },
+    ],
+    interests: ["System design", "Reliability", "Databases", "Observability"],
+  },
+  {
+    id: "aanya-iyer",
+    name: "Aanya Iyer",
+    role: "Data Analyst",
+    experience: "4+ years delivering insights with analytics, dashboards, and experimentation.",
+    skills: [
+      { name: "SQL", level: "Advanced" },
+      { name: "Excel", level: "Advanced" },
+      { name: "Python (Pandas)", level: "Intermediate" },
+      { name: "Data Visualization", level: "Advanced" },
+      { name: "A/B Testing", level: "Intermediate" },
+    ],
+    interests: ["Storytelling with data", "Business strategy", "Product analytics", "Automation"],
+  },
+];
+
+/**
+ * PUBLIC_INTERFACE
+ * skillProfileData: backwards compatible single-profile export used by older UI code.
+ * Defaults to the first entry in `skillProfiles`.
+ */
+export const skillProfileData = skillProfiles[0];
