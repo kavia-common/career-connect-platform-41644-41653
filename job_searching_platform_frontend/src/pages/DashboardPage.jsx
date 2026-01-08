@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../state/authStore";
 import { useNotificationsStore } from "../state/notificationsStore";
 import { loadNotifications } from "../utils/notificationsStorage";
+import { loadApplications } from "../utils/applicationsStorage";
 import { jobsData } from "../data/jobsData";
 import { challenges } from "../data/challengesData";
 
@@ -42,35 +43,56 @@ export default function DashboardPage() {
     return list.slice(0, 4);
   }, []);
 
+  const applications = useMemo(() => loadApplications(), []);
+  const activeApplicationsCount = useMemo(() => {
+    // “Active” = not in terminal states; this is heuristic for a mock UI.
+    const activeStatuses = new Set(["rejected", "withdrawn", "offer declined"]);
+    return (applications ?? []).filter((a) => {
+      const status = String(a?.status ?? "").trim().toLowerCase();
+      if (!status) return true;
+      return !activeStatuses.has(status);
+    }).length;
+  }, [applications]);
+
+  const jobMatchesCount = useMemo(() => {
+    // Placeholder “new matches”: use the size of local dataset as a proxy for now.
+    // When AI matching is implemented, this should use the matching engine output.
+    return Math.min(Array.isArray(jobsData) ? jobsData.length : 0, 24);
+  }, []);
+
+  const skillScore = useMemo(() => {
+    // Placeholder skill score; can later come from profile analysis.
+    return { pct: 86, skill: "React" };
+  }, []);
+
   const kpis = useMemo(() => {
-    // MVP KPI numbers: wired to UX, can be replaced with backend stats later.
     return [
       {
-        label: "Profile Strength",
-        value: "78%",
-        sub: "Complete 2 sections to reach 90%",
-        delta: { text: "+6% this week", kind: "positive" },
-      },
-      {
-        label: "Recommended Jobs",
-        value: String(recommendedJobs.length),
-        sub: "Based on your skills & interests",
-        delta: { text: "AI matched", kind: "info" },
+        label: "Job Matches",
+        value: String(jobMatchesCount),
+        sub: "New matches",
+        icon: "🔎",
       },
       {
         label: "Applications",
-        value: "3",
-        sub: "2 in review • 1 submitted",
-        delta: { text: "Keep going", kind: "info" },
+        value: String(activeApplicationsCount),
+        sub: "Active",
+        icon: "📄",
       },
       {
         label: "Notifications",
         value: String(unreadCount || 0),
-        sub: "Unread updates & reminders",
-        delta: { text: "New today", kind: unreadCount > 0 ? "positive" : "info" },
+        sub: "Unread",
+        icon: "🔔",
+      },
+      {
+        label: "Skill Score",
+        value: `${skillScore.pct}%`,
+        sub: skillScore.skill,
+        icon: "🎯",
       },
     ];
-  }, [recommendedJobs.length, unreadCount]);
+  }, [activeApplicationsCount, jobMatchesCount, skillScore.pct, skillScore.skill, unreadCount]);
 
   return (
     <div className="container">
@@ -100,16 +122,20 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* KPI cards */}
-        <section className="kpi-grid" aria-label="Key performance indicators">
+        {/* KPI cards (compact) */}
+        <section className="kpi-grid compact" aria-label="Key performance indicators">
           {kpis.map((k) => (
-            <div key={k.label} className="kpi-card">
-              <div className="kpi-top">
-                <div className="kpi-label">{k.label}</div>
-                <div className={`kpi-delta ${k.delta.kind}`}>{k.delta.text}</div>
+            <div key={k.label} className="kpi-card compact">
+              <div className="kpi-row">
+                <div className="kpi-icon" aria-hidden="true">
+                  {k.icon}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div className="kpi-label">{k.label}</div>
+                  <div className="kpi-value">{k.value}</div>
+                  <div className="kpi-sub">{k.sub}</div>
+                </div>
               </div>
-              <div className="kpi-value">{k.value}</div>
-              <div className="kpi-sub">{k.sub}</div>
             </div>
           ))}
         </section>
