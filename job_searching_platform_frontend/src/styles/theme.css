@@ -15,7 +15,8 @@
   --color-text-muted: #4B5563; /* gray-600-ish */
   --color-border: #E5E7EB; /* gray-200-ish */
 
-  --color-primary: var(--eg-primary);
+  /* Blue accent primary for SaaS-style UI */
+  --color-primary: #2563EB; /* blue-600 */
   --color-primary-contrast: #FFFFFF;
   --color-secondary: var(--eg-secondary);
 
@@ -33,7 +34,7 @@
   --container-max: 1120px;
   --sidebar-width: 260px;
 
-  --focus-ring: 0 0 0 3px rgba(55, 65, 81, 0.25);
+  --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.28);
 }
 
 [data-theme="dark"] {
