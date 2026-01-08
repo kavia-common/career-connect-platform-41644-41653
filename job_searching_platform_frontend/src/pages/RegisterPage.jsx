@@ -29,8 +29,16 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
   });
+
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Email verification UX state
+  const [showVerifyBanner, setShowVerifyBanner] = useState(false);
+  const [verifyBannerEmail, setVerifyBannerEmail] = useState("");
+
+  const [resendStatus, setResendStatus] = useState("idle"); // idle | sending | sent | error
+  const [resendMessage, setResendMessage] = useState("");
 
   // If already authenticated, keep users out of public auth pages.
   useEffect(() => {
@@ -55,7 +63,8 @@ export default function RegisterPage() {
     if (!password) errors.password = "Password is required.";
     else errors.password = validatePassword(password);
 
-    if (!confirmPassword) errors.confirmPassword = "Please confirm your password.";
+    if (!confirmPassword)
+      errors.confirmPassword = "Please confirm your password.";
     else if (confirmPassword !== password)
       errors.confirmPassword = "Passwords do not match.";
 
@@ -71,21 +80,28 @@ export default function RegisterPage() {
   const onSubmit = async (e) => {
     e.preventDefault();
     setSubmitError("");
+    setShowVerifyBanner(false);
+    setVerifyBannerEmail("");
+    setResendStatus("idle");
+    setResendMessage("");
 
     if (!validate()) return;
 
     setIsSubmitting(true);
     try {
+      const cleanedEmail = email.trim();
+
       const data = await auth.register({
-        email: email.trim(),
+        email: cleanedEmail,
         password,
         fullName: fullName.trim(),
       });
 
       // If email confirmation is enabled, Supabase returns no session until confirmed.
-      // In that case we keep the existing UX: redirect to login with a success banner.
+      // NEW UX: show explicit banner here and allow resend; also provide a CTA to go to login.
       if (!data?.session) {
-        navigate("/login?registered=1", { replace: true });
+        setShowVerifyBanner(true);
+        setVerifyBannerEmail(cleanedEmail);
         return;
       }
 
@@ -99,6 +115,22 @@ export default function RegisterPage() {
       setSubmitError(message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const onResendVerification = async () => {
+    setResendStatus("sending");
+    setResendMessage("");
+    try {
+      const targetEmail = (verifyBannerEmail || email || "").trim();
+      await auth.resendVerificationEmail(targetEmail);
+      setResendStatus("sent");
+      setResendMessage(
+        "Verification email sent. Please check your inbox (and spam folder)."
+      );
+    } catch (err) {
+      setResendStatus("error");
+      setResendMessage(err?.message || "Could not resend verification email.");
     }
   };
 
@@ -138,6 +170,76 @@ export default function RegisterPage() {
             </div>
           ) : null}
 
+          {showVerifyBanner ? (
+            <div
+              className="card"
+              style={{
+                borderColor: "rgba(55, 65, 81, 0.22)",
+                background: "rgba(55, 65, 81, 0.06)",
+                marginBottom: 12,
+              }}
+            >
+              <div className="card-body">
+                <div style={{ fontWeight: 800, marginBottom: 6 }}>
+                  Check your inbox to verify your email
+                </div>
+                <div className="muted" style={{ fontSize: 13 }}>
+                  We sent a verification link to{" "}
+                  <span style={{ fontWeight: 700, color: "var(--color-text)" }}>
+                    {verifyBannerEmail}
+                  </span>
+                  . Click that link to activate your account, then sign in.
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 12,
+                    display: "flex",
+                    gap: 10,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    onClick={onResendVerification}
+                    disabled={resendStatus === "sending"}
+                  >
+                    {resendStatus === "sending"
+                      ? "Sending…"
+                      : "Resend verification email"}
+                  </button>
+
+                  <Link
+                    className="btn btn-primary"
+                    to={`/login?verifyEmail=1&registered=1`}
+                    style={{ textDecoration: "none", display: "inline-block" }}
+                  >
+                    Go to sign in
+                  </Link>
+                </div>
+
+                {resendMessage ? (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      fontSize: 13,
+                      color:
+                        resendStatus === "sent"
+                          ? "var(--color-success)"
+                          : resendStatus === "error"
+                            ? "var(--color-danger)"
+                            : "var(--color-text-muted)",
+                    }}
+                    role="status"
+                  >
+                    {resendMessage}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
           <form onSubmit={onSubmit} noValidate aria-label="register-form">
             <div className="form-row">
               <label className="label" htmlFor="fullName">
@@ -151,6 +253,7 @@ export default function RegisterPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 aria-invalid={fieldErrors.fullName ? "true" : "false"}
+                disabled={showVerifyBanner}
               />
               {fieldErrors.fullName ? (
                 <div className="form-error">{fieldErrors.fullName}</div>
@@ -169,6 +272,7 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 aria-invalid={fieldErrors.email ? "true" : "false"}
+                disabled={showVerifyBanner}
               />
               {fieldErrors.email ? (
                 <div className="form-error">{fieldErrors.email}</div>
@@ -187,6 +291,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 aria-invalid={fieldErrors.password ? "true" : "false"}
+                disabled={showVerifyBanner}
               />
               {fieldErrors.password ? (
                 <div className="form-error">{fieldErrors.password}</div>
@@ -205,6 +310,7 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 aria-invalid={fieldErrors.confirmPassword ? "true" : "false"}
+                disabled={showVerifyBanner}
               />
               {fieldErrors.confirmPassword ? (
                 <div className="form-error">{fieldErrors.confirmPassword}</div>
@@ -229,14 +335,16 @@ export default function RegisterPage() {
               </div>
             ) : null}
 
-            <button
-              className="btn btn-primary"
-              type="submit"
-              disabled={isSubmitting || auth.status === "authenticating"}
-              style={{ width: "100%" }}
-            >
-              {isSubmitting ? "Creating account…" : "Create account"}
-            </button>
+            {!showVerifyBanner ? (
+              <button
+                className="btn btn-primary"
+                type="submit"
+                disabled={isSubmitting || auth.status === "authenticating"}
+                style={{ width: "100%" }}
+              >
+                {isSubmitting ? "Creating account…" : "Create account"}
+              </button>
+            ) : null}
           </form>
 
           <div style={{ marginTop: 14, fontSize: 13 }} className="muted">

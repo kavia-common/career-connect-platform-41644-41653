@@ -18,13 +18,31 @@ import { supabase } from "../services/supabaseClient";
 const AuthContext = createContext(null);
 
 /**
- * Map Supabase auth errors into a stable UI-consumable shape similar to the previous
- * httpClient normalization, so existing UI error handling remains simple.
+ * Supabase may return a few different codes/messages for the same underlying issue
+ * depending on project settings and SDK versions.
+ * We normalize these into stable app-level codes for UI branching.
  * @param {any} err
  */
 function normalizeSupabaseAuthError(err) {
-  const message = err?.message || "Authentication failed. Please try again.";
+  const rawMessage = (err?.message || "").toLowerCase();
+  const rawCode = (err?.code || "").toLowerCase();
   const status = err?.status;
+
+  const isEmailNotConfirmed =
+    rawCode === "email_not_confirmed" ||
+    rawMessage.includes("email not confirmed") ||
+    rawMessage.includes("email not confirmed") ||
+    rawMessage.includes("confirm your email") ||
+    rawMessage.includes("email confirmation");
+
+  if (isEmailNotConfirmed) {
+    return {
+      code: "EMAIL_NOT_CONFIRMED",
+      status,
+      message:
+        "Your email address hasn’t been verified yet. Please check your inbox and click the verification link, then sign in again.",
+    };
+  }
 
   // Provide a small set of stable-ish codes for UI branching.
   const code =
@@ -32,7 +50,11 @@ function normalizeSupabaseAuthError(err) {
       ? "UNAUTHORIZED"
       : err?.code || "AUTH_ERROR";
 
-  return { code, message, status };
+  return {
+    code,
+    status,
+    message: err?.message || "Authentication failed. Please try again.",
+  };
 }
 
 /**
@@ -46,6 +68,7 @@ function normalizeSupabaseAuthError(err) {
  * - user: Supabase user or null
  * - login({email,password})
  * - register({email,password,fullName})
+ * - resendVerificationEmail(email)
  * - logout()
  */
 export function AuthProvider({ children }) {
@@ -117,12 +140,21 @@ export function AuthProvider({ children }) {
   const register = useCallback(async ({ email, password, fullName }) => {
     setLoading(true);
     try {
+      const emailRedirectTo =
+        process.env.REACT_APP_FRONTEND_URL &&
+        process.env.REACT_APP_FRONTEND_URL.trim()
+          ? process.env.REACT_APP_FRONTEND_URL.trim()
+          : undefined;
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           // Store display name in metadata (no DB table changes required for this task).
           data: { fullName: fullName || "" },
+
+          // Ensure email links return to our frontend when provided.
+          ...(emailRedirectTo ? { emailRedirectTo } : {}),
         },
       });
       if (error) throw error;
@@ -136,6 +168,29 @@ export function AuthProvider({ children }) {
       throw normalizeSupabaseAuthError(e);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  // PUBLIC_INTERFACE
+  const resendVerificationEmail = useCallback(async (email) => {
+    /** Resends the Supabase signup confirmation email to the given address. */
+    const cleanedEmail = (email || "").trim();
+    if (!cleanedEmail) {
+      throw {
+        code: "VALIDATION_ERROR",
+        message: "Please enter your email address first.",
+      };
+    }
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: cleanedEmail,
+      });
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      throw normalizeSupabaseAuthError(e);
     }
   }, []);
 
@@ -171,9 +226,19 @@ export function AuthProvider({ children }) {
       user,
       login,
       register,
+      resendVerificationEmail,
       logout,
     }),
-    [status, loading, session, user, login, register, logout]
+    [
+      status,
+      loading,
+      session,
+      user,
+      login,
+      register,
+      resendVerificationEmail,
+      logout,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
