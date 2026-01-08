@@ -4,27 +4,29 @@ import { useNotificationsStore } from '../state/notificationsStore';
 import { BsBell, BsCircle } from 'react-icons/bs';
 import './styles/RecentNotificationsPanel.css';
 
-// PUBLIC_INTERFACE
-const RecentNotificationsPanel = ({ onViewAll }) => {
-  /**
-   * RecentNotificationsPanel shows the latest notifications
-   * in a light, rounded panel with actions.
-   */
+/**
+ * PUBLIC_INTERFACE
+ * RecentNotificationsPanel displays a notification summary card for the dashboard
+ * or a full panel on Notifications page. Blue-accent icon, rounded, shadow.
+ * @param {object} props
+ * @param {function} props.onViewAll - callback for "View All" link/button
+ * @param {boolean} [props.summaryMode] - if true, summary style for dashboard
+ */
+const RecentNotificationsPanel = ({ onViewAll, summaryMode }) => {
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
   const updateUnreadCount = useNotificationsStore((s) => s.updateUnreadCount);
 
   useEffect(() => {
-    // Fetch and sort notifications (show newest first)
     const notifs = loadNotifications();
     setRecent(
       notifs
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 5)
+        .slice(0, summaryMode ? 3 : 5)
     );
     setLoading(false);
-  }, [unreadCount]);
+  }, [unreadCount, summaryMode]);
 
   const handleMarkAllAsRead = () => {
     markAllNotificationsRead();
@@ -32,7 +34,6 @@ const RecentNotificationsPanel = ({ onViewAll }) => {
   };
 
   const relativeTime = (dateStr) => {
-    // Return string like "2 hours ago"
     const now = new Date();
     const date = new Date(dateStr);
     const seconds = Math.floor((now - date) / 1000);
@@ -47,17 +48,19 @@ const RecentNotificationsPanel = ({ onViewAll }) => {
   };
 
   return (
-    <div className="recent-notifications-panel dashboard-widget">
+    <div className={`recent-notifications-panel dashboard-widget${summaryMode ? " notifications-panel-summary" : ""}`}>
       <div className="rnp-header">
         <span>
-          <BsBell className="rnp-bell-icon" />
+          <BsBell className="rnp-bell-icon blue-accent" />
           Recent Notifications
         </span>
         <div className="rnp-actions">
-          <button className="rnp-action-link" onClick={onViewAll}>
-            View All
-          </button>
-          {unreadCount > 0 && (
+          {onViewAll && (
+            <button className="rnp-action-link" onClick={onViewAll}>
+              View All
+            </button>
+          )}
+          {!summaryMode && unreadCount > 0 && (
             <button className="rnp-action-link" onClick={handleMarkAllAsRead}>
               Mark as Read
             </button>
@@ -73,8 +76,7 @@ const RecentNotificationsPanel = ({ onViewAll }) => {
           recent.map((notif) => (
             <div className={`rnp-item${notif.read ? '' : ' unread'}`} key={notif.id}>
               <span className="rnp-icon-wrap">
-                {/* Optionally map notif.type to icon */}
-                {notif.type === 'job' ? <BsBell/> : <BsBell/>}
+                <BsBell />
                 {!notif.read && <BsCircle className="rnp-unread-dot" />}
               </span>
               <div className="rnp-text">

@@ -1,3 +1,5 @@
+@import '../components/styles/ChallengeCard.css';
+
 /* Dashboard-specific styling (kept separate to avoid affecting other pages). */
 
 .kpi-grid {
@@ -240,5 +242,63 @@
 @media (max-width: 520px) {
   .kpi-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* --- Dashboard right sticky panel styles --- */
+.dashboard-container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  padding: 2rem 2rem 2rem 2rem;
+  background: var(--c-background, #f9fafb);
+  box-sizing: border-box;
+}
+.dashboard-main-content {
+  width: 68%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
+}
+
+.dashboard-right-panel {
+  width: 32%;
+  min-width: 320px;
+  max-width: 400px;
+  padding-left: 2rem;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.dashboard-right-panel-stack {
+  position: sticky;
+  top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.dashboard-challenge-card-summary {
+  width: 100%;
+}
+@media (max-width: 1020px) {
+  .dashboard-container {
+    flex-direction: column;
+    padding: 1rem 0.5rem;
+  }
+  .dashboard-main-content,
+  .dashboard-right-panel {
+    width: 100%;
+    max-width: unset;
+    min-width: 0;
+    padding: 0;
+  }
+  .dashboard-right-panel {
+    margin-top: 2rem;
+  }
+  .dashboard-right-panel-stack {
+    position: static;
+    top: unset;
+    gap: 1rem;
   }
 }
