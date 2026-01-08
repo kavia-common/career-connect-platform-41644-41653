@@ -115,6 +115,17 @@ export function saveNotifications(notifications) {
 
 /**
  * PUBLIC_INTERFACE
+ * markAllNotificationsRead marks all notifications as read and persists them.
+ */
+export function markAllNotificationsRead() {
+  const notifications = loadNotifications();
+  const updated = (notifications ?? []).map((n) => ({ ...n, read: true }));
+  saveNotifications(updated);
+  return updated;
+}
+
+/**
+ * PUBLIC_INTERFACE
  * toggleNotificationRead toggles read/unread for a notification id.
  *
  * @param {Array<{id: string, read: boolean}>} notifications
@@ -127,17 +138,6 @@ export function toggleNotificationRead(notifications, id) {
     if (String(n?.id) !== key) return n;
     return { ...n, read: !Boolean(n?.read) };
   });
-}
-
-/**
- * PUBLIC_INTERFACE
- * markAllNotificationsRead marks all notifications as read.
- *
- * @param {Array<{read: boolean}>} notifications
- * @returns {Array<any>} updated list
- */
-export function markAllNotificationsRead(notifications) {
-  return (notifications ?? []).map((n) => ({ ...n, read: true }));
 }
 
 /**

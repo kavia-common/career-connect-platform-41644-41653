@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo, useReducer } from "react";
+import { getUnreadCount, loadNotifications } from "../utils/notificationsStorage";
 
 const NotificationsContext = createContext(null);
 
@@ -18,10 +19,16 @@ function reducer(state, action) {
 export function NotificationsProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, { unreadCount: 0 });
 
+  const updateUnreadCount = () => {
+    const notifications = loadNotifications();
+    dispatch({ type: "SET_UNREAD_COUNT", payload: getUnreadCount(notifications) });
+  };
+
   const value = useMemo(
     () => ({
       ...state,
       setUnreadCount: (n) => dispatch({ type: "SET_UNREAD_COUNT", payload: n }),
+      updateUnreadCount,
     }),
     [state]
   );
